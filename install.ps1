@@ -112,6 +112,11 @@ Invoke-Progress -N "Install plugin" -B {
 
 # ── Step 5: Config files ───────────────────────────────────────────────────
 Write-Step "Configuration"
+# Clean old config files that could cause conflicts
+@("opencode.jsonc", "opencode.jsonc.backup-*") | ForEach-Object {
+  $old = Join-Path $ConfigDir $_
+  if (Test-Path $old) { Remove-Item -Path $old -Force; Write-Info "Removed old $_" }
+}
 if (-not (Test-Path $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
 
 if ($RepoDir -and (Test-Path "$RepoDir\config")) {

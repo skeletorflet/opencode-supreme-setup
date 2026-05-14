@@ -91,6 +91,8 @@ run "Install plugin" bunx oh-my-openagent install --no-tui $FLAGS --skip-auth 2>
 # Step 5: Config files
 step "Configuration"
 mkdir -p "$CONFIG_DIR"
+# Clean old config files that could cause conflicts
+rm -f "$CONFIG_DIR/opencode.jsonc" "$CONFIG_DIR/opencode.jsonc.backup-"*
 
 if [ -d "$REPO_DIR/config" ]; then
   run "Copy config" cp -r "$REPO_DIR/config/"* "$CONFIG_DIR/"
