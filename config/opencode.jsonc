@@ -1,77 +1,69 @@
 {
-  "plugin": ["oh-my-openagent"],
-  "$schema": "https://opencode.ai/config.json",
-  "model": "opencode-go/deepseek-v4-flash",
-  "instructions": [
-    "AGENTS.md"
+  "$schema": "https://opencode.ai/schema/opencode.jsonc",
+  "version": "0.6",
+  "model": {
+    "default": "opencode-go/deepseek-v4-flash",
+    "provider": "opencode-go"
+  },
+  "plugins": [
+    "oh-my-openagent"
   ],
-  "mcp": {
+  "mcpServers": {
     "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp"
+      "type": "plugin",
+      "name": "context7",
+      "description": "Query library documentation via Context7",
+      "enabled": true
     },
     "gh_grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app"
+      "type": "plugin",
+      "name": "gh_grep",
+      "description": "Search GitHub code examples",
+      "enabled": true
     }
   },
-  "permission": {
-    "*": "allow",
-    "edit": "allow",
-    "bash": "allow",
-    "webfetch": "allow",
-    "websearch": "allow",
-    "doom_loop": "allow"
-  },
-  "agent": {
+  "agents": {
     "caveman": {
-      "description": "Ultra-fast, zero-fluff coding agent. Caveman mode.",
-      "mode": "primary",
+      "description": "Ultra-efficient coder. Zero fluff, max output. Translates Spanish to English.",
       "model": "opencode-go/deepseek-v4-flash",
-      "temperature": 0,
-      "color": "#ff6b6b",
-      "permission": {
-        "edit": "allow",
-        "bash": "allow",
-        "webfetch": "allow",
-        "websearch": "allow",
-        "doom_loop": "allow"
-      }
+      "instructions": "config/AGENTS.md",
+      "systemPrompt": "You are a MASTER CAVEMAN CODER. Ultra-efficient, zero fluff, maximum output."
     },
     "security-auditor": {
       "description": "Audits code for vulnerabilities and security issues",
-      "mode": "subagent",
       "model": "opencode-go/deepseek-v4-flash",
-      "temperature": 0,
-      "permission": {
-        "edit": "deny",
-        "bash": "allow",
-        "grep": "allow",
-        "read": "allow"
-      }
+      "systemPrompt": "You are a security auditor. Analyze code for vulnerabilities, injection risks, exposed secrets, and insecure patterns. Be thorough and report findings with severity levels."
     },
     "docs-writer": {
       "description": "Writes documentation only",
-      "mode": "subagent",
       "model": "opencode-go/deepseek-v4-flash",
-      "temperature": 0.1,
-      "permission": {
-        "edit": "allow",
-        "bash": "deny",
-        "read": "allow"
-      }
+      "systemPrompt": "You are a documentation writer. Create clear, concise, well-structured documentation. Use markdown. Cover usage, examples, and API references."
     },
     "refactor": {
       "description": "Aggressive code refactoring and cleanup",
-      "mode": "subagent",
       "model": "opencode-go/deepseek-v4-flash",
-      "temperature": 0,
-      "permission": {
-        "edit": "allow",
-        "bash": "allow",
-        "grep": "allow",
-        "glob": "allow",
-        "lsp": "allow"
+      "systemPrompt": "You are a code refactoring specialist. Improve code quality, reduce duplication, modernize patterns, and enhance readability without changing functionality."
+    }
+  },
+  "agentShortcuts": {
+    "@caveman": "caveman",
+    "@security-auditor": "security-auditor",
+    "@docs-writer": "docs-writer",
+    "@refactor": "refactor"
+  },
+  "permissions": {
+    "agents": {
+      "caveman": {
+        "allow": ["read", "write", "edit", "bash", "grep", "glob", "task"]
+      },
+      "security-auditor": {
+        "allow": ["read", "grep", "glob", "bash"]
+      },
+      "docs-writer": {
+        "allow": ["read", "write", "grep", "glob"]
+      },
+      "refactor": {
+        "allow": ["read", "write", "edit", "bash", "grep", "glob"]
       }
     }
   }
