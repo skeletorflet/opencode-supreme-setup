@@ -33,7 +33,7 @@
 ### Windows (PowerShell 7+)
 
 ```powershell
-irm https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/install.ps1 | iex
 ```
 
 Or clone and run locally:
@@ -46,7 +46,7 @@ git clone https://github.com/skeletorflet/opencode-supreme-setup.git && cd openc
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/install.sh | bash
 ```
 
 Or clone and run locally:
