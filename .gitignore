@@ -11,6 +11,9 @@ credentials.json
 *.key
 *.pem
 
+# OpenCode project dirs
+.opencode/
+
 # IDE
 .idea/
 .vscode/
