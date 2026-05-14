@@ -110,18 +110,14 @@ fi
 step "Model configuration"
 MODEL=""
 if [ -f "$CONFIG_DIR/oh-my-openagent.json" ]; then
-  echo "    1) Keep oh-my-openagent default models (recommended)"
-  echo "    2) DeepSeek V4 Flash on ALL agents"
-  echo "    3) DeepSeek V4 on ALL agents"
-  echo "    4) DeepSeek R1 on ALL agents"
-  echo "    5) Custom model"
-  read -p "  ? Choose (1-5): " mc
+  echo "    1) Keep oh-my-openagent default models"
+  echo "    2) DeepSeek V4 Flash on ALL agents (opencode-go sub)"
+  echo "    3) Custom model — you type any model name"
+  read -p "  ? Choose (1-3): " mc
   case "$mc" in
     1) MODEL="" ;;
     2) MODEL="opencode-go/deepseek-v4-flash" ;;
-    3) MODEL="opencode-go/deepseek-v4" ;;
-    4) MODEL="opencode-go/deepseek-r1" ;;
-    5) read -p "  Enter full model: " MODEL ;;
+    3) read -p "  Enter full model (e.g. opencode-go/deepseek-v4-flash): " MODEL ;;
     *) MODEL="" ;;
   esac
   [ -n "$MODEL" ] && info "Model: $MODEL" || info "Keeping default models"

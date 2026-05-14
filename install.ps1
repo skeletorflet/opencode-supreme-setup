@@ -132,18 +132,14 @@ $omoConfig = "$ConfigDir\oh-my-openagent.json"
 
 $modelId = "opencode-go/deepseek-v4-flash"
 if (-not $NonInteractive -and (Test-Path $omoConfig)) {
-  Write-Host "    1) Keep oh-my-openagent default models (recommended)" -ForegroundColor White
-  Write-Host "    2) DeepSeek V4 Flash on ALL agents (current default)" -ForegroundColor White
-  Write-Host "    3) DeepSeek V4 on ALL agents" -ForegroundColor White
-  Write-Host "    4) DeepSeek R1 on ALL agents" -ForegroundColor White
-  Write-Host "    5) Custom model (type any opencode-go/model)" -ForegroundColor White
-  $choice = Read-Host "  ? Choose model config (1-5)"
+  Write-Host "    1) Keep oh-my-openagent default models" -ForegroundColor White
+  Write-Host "    2) DeepSeek V4 Flash on ALL agents (opencode-go sub)" -ForegroundColor White
+  Write-Host "    3) Custom model — you type any model name" -ForegroundColor White
+  $choice = Read-Host "  ? Choose (1-3)"
   switch ($choice) {
     "1" { $modelId = $null; Write-Info "Keeping default models" }
     "2" { $modelId = "opencode-go/deepseek-v4-flash" }
-    "3" { $modelId = "opencode-go/deepseek-v4" }
-    "4" { $modelId = "opencode-go/deepseek-r1" }
-    "5" { $modelId = Read-Host "  Enter full model name (e.g. opencode-go/deepseek-v4-flash)" }
+    "3" { $modelId = Read-Host "  Enter full model (e.g. opencode-go/deepseek-v4-flash)" }
     default { $modelId = $null; Write-Info "Keeping default models" }
   }
 }
