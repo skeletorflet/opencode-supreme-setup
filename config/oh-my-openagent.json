@@ -94,6 +94,30 @@
       "anthropic": 3,
       "google": 5
     },
+    "mcp": {
+      "servers": {
+        "web-search": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-tavily"],
+          "env": { "TAVILY_API_KEY": "${TAVILY_API_KEY}" }
+        },
+        "pdf-reader": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-pdf"],
+          "description": "Read and analyze PDF documents"
+        },
+        "google-drive": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+          "description": "Access files in Google Drive"
+        },
+        "memory-plus": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-memory"],
+          "description": "Advanced graph-based memory"
+        }
+      }
+    },
     "modelConcurrency": {
       "opencode-go/deepseek-v4-flash": 5
     }
@@ -102,6 +126,8 @@
     "aggressive_truncation": true,
     "auto_resume": true,
     "task_system": true,
+    "parallel_discovery": true,
+    "streaming_tools": true,
     "dynamic_context_pruning": {
       "enabled": true,
       "notification": "minimal",
