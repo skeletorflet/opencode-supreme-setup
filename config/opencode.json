@@ -4,7 +4,18 @@
   "small_model": "opencode-go/deepseek-v4-flash",
   "default_agent": "caveman",
   "instructions": ["AGENTS.md"],
-  "plugin": ["oh-my-openagent"],
+  "plugin": [
+    "oh-my-openagent",
+    "opencode-snippets",
+    "opencode-snip",
+    "opencode-notify",
+    "opencode-mem",
+    "opencode-quota",
+    "opencode-background-agents",
+    "opencode-worktree",
+    "opencode-dynamic-context-pruning",
+    "opencode-smart-title"
+  ],
   "agent": {
     "caveman": {
       "mode": "primary",

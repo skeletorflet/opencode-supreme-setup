@@ -1,37 +1,33 @@
 # OpenCode Supreme Setup
 
-> One-command setup for the ultimate OpenCode experience — oh-my-openagent, caveman mode, 50+ built-in skills, custom agents, MCPs, and deepseek-v4-flash.
+> **The ULTIMATE one-command OpenCode setup** — 150+ skills, 12 plugins, persistent memory, snip token savings, caveman mode, and deepseek-v4-flash.
 
 [![OpenCode](https://img.shields.io/badge/OpenCode-powered-6366f1?style=flat-square)](https://opencode.ai)
-[![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-0.6%2B-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)
+[![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-57.8k⭐-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/skeletorflet/opencode-supreme-setup/pulls)
+[![CI](https://img.shields.io/github/actions/workflow/status/skeletorflet/opencode-supreme-setup/ci.yml?style=flat-square)](https://github.com/skeletorflet/opencode-supreme-setup/actions)
 [![GitHub](https://img.shields.io/badge/GitHub-skeletorflet%2Fopencode--supreme--setup-181717?style=flat-square&logo=github)](https://github.com/skeletorflet/opencode-supreme-setup)
 
 ---
 
-## What's Included
+## What You Get
 
-| Feature | Description |
-|---------|-------------|
-| **oh-my-openagent** | Sisyphus orchestrator, Team Mode (8 parallel agents), ultrawork (`ulw`) |
+| Category | Included |
+|----------|----------|
+| **Agent Orchestration** | oh-my-openagent (Sisyphus, Team Mode, 8 parallel agents) |
 | **Caveman Mode** | Zero-fluff AGENTS.md — ultra low tokens, auto-translate any language to English |
 | **Custom Agents** | `caveman`, `security-auditor`, `docs-writer`, `refactor` |
-| **50+ Built-in Skills** | find, debug, test, perf, api, git, docker, regex, shell, security, db, a11y, i18n, ci, and more |
-| **MCPs** | context7 (library docs), gh_grep (GitHub code search) |
+| **Skills** | 51 built-in + 100+ from Anthropic marketplace via OpenSkills |
+| **Plugins** | snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title |
+| **Memory** | Persistent vector-DB memory (`opencode-mem`) — cross-session context |
+| **Token Savings** | `snip` CLI — filters shell output, 60-90% fewer tokens |
 | **Model** | 100% `opencode-go/deepseek-v4-flash` across all agents |
 | **Optimizations** | Hashline edits, runtime fallback, dynamic context pruning, auto-resume, cross-platform |
 
 ## Prerequisites
 
-- **Node.js** 18+ (for opencode)
-- **Bun** 1.x (for oh-my-openagent) — auto-installed if missing
-- **PowerShell 7+** (Windows) or **bash** (Linux/macOS)
-- An **OpenCode Go** subscription ([$10/mo](https://opencode.ai/pricing)) or other provider key
-
-The installer auto-detects your platform and handles everything:
-- Windows: disables tmux, installs gh via winget
-- Linux/macOS: keeps tmux enabled, installs gh via brew/apt
+- **Node.js** 18+ • **Bun** 1.x (auto-installed) • **PowerShell 7+** or **bash 4+**
+- **OpenCode Go** subscription ([$10/mo](https://opencode.ai/pricing)) or other provider key
 
 ## Quick Install
 
@@ -41,102 +37,115 @@ The installer auto-detects your platform and handles everything:
 irm https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/install.ps1 | iex
 ```
 
-Or clone and run locally:
-
-```powershell
-git clone https://github.com/skeletorflet/opencode-supreme-setup.git && cd opencode-supreme-setup
-.\install.ps1
-```
-
 ### Linux / macOS
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/install.sh | bash
 ```
 
-Or clone and run locally:
+### Or clone
 
 ```bash
 git clone https://github.com/skeletorflet/opencode-supreme-setup.git && cd opencode-supreme-setup
-chmod +x install.sh && ./install.sh
+# Windows: .\install.ps1
+# Linux/macOS: chmod +x install.sh && ./install.sh
 ```
 
 ## What Gets Installed
 
-The installer runs these steps automatically:
+The installer runs 13 automated steps:
 
-1. Checks/installs **Node.js** and **Bun**
-2. Installs **OpenCode** and **oh-my-openagent**
-3. Registers the **oh-my-openagent** plugin in opencode.json
-4. Copies/downloads **config files** (opencode.json, oh-my-openagent.json, AGENTS.md)
-5. Downloads **50+ skills** to `~/.config/opencode/skills/`
-6. Optimizes config for your platform (tmux on/off, model overrides)
-7. Installs **comment-checker**, **GitHub CLI**, and optional plugins
-8. Runs **doctor verification**
+| Step | What |
+|------|------|
+| 1 | Prerequisites (Node.js, PowerShell 7+) |
+| 2 | OpenCode + Bun |
+| 3 | Provider subscription configuration |
+| 4 | oh-my-openagent (agent orchestration) |
+| 5 | Config files + 51 built-in skills |
+| 6 | Platform optimizations (tmux on/off, model overrides) |
+| 7 | Developer tools (comment-checker, GitHub CLI) |
+| 8 | **9 essential plugins** (snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title) |
+| 9 | **OpenSkills — 100+ marketplace skills** |
+| 10 | Optional: agentsys (20 plugins, 49 agents, 41 skills) |
+| 11 | Optional: supermemory, firecrawl, WakaTime, themes |
+| 12 | Verification (oh-my-openagent doctor) |
+| 13 | Summary |
+
+## Plugins
+
+| Plugin | What It Does |
+|--------|-------------|
+| **oh-my-openagent** | Sisyphus orchestrator, Team Mode, 8 parallel agents, MCPs |
+| **opencode-snippets** | `#snippet` inline text expansion — DRY for prompts |
+| **opencode-snip** | Auto-prefixes shell commands with `snip` → 60-90% token reduction |
+| **opencode-notify** | Native OS notifications when tasks complete |
+| **opencode-mem** | Persistent vector-DB memory with web UI (localhost:4747) |
+| **opencode-quota** | Token usage and cost tracking with toasts |
+| **opencode-background-agents** | Claude Code-style background/async agent delegation |
+| **opencode-worktree** | Zero-friction isolated git worktrees |
+| **opencode-dynamic-context-pruning** | Auto-prune obsolete tool outputs from context |
+| **opencode-smart-title** | Auto-generates meaningful session titles |
+
+## Skills
+
+### 51 Built-in Skills
+a11y, api, arch, async, auth, benchmark, caching, ci, cleanup, cli, config, css, data, db, debug, deploy, docker, docs, env, error, find, git, git-master, graphql, i18n, json, logging, markdown, mcp, migration, monitoring, naming, node, onboard, perf, playwright, pr-review, python, react, refactor, regex, rest, scaffold, security, serialize, shell, state, test, typescript, ui, webhook
+
+### 100+ Marketplace Skills (via OpenSkills)
+PDF manipulation, image analysis, data visualization, git workflows, code review, documentation, deployment, security auditing, and more from [anthropics/skills](https://github.com/anthropics/skills).
+
+Use: `npx openskills read <skill-name>`
+
+## Usage
+
+```bash
+opencode                    # Launch
+ulw <task>                  # Ultrawork mode (parallel agents)
+Tab                         # Cycle: build → plan → caveman
+@security-auditor           # Security audit
+@refactor <files>           # Refactor
+@docs-writer                # Write docs
+#snippet                    # Text expansion
+npx openskills read <name>  # Load marketplace skill
+```
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `config/opencode.json` | Main OpenCode config — plugins, agents, skills path |
-| `config/oh-my-openagent.json` | oh-my-openagent plugin config — models, team mode, fallbacks |
-| `config/AGENTS.md` | Global caveman instructions — zero fluff, low tokens, multi-language |
-| `config/skills/*/SKILL.md` | 50+ built-in skills for development workflows |
-| `install.ps1` | Windows PowerShell installer (also works piped from irm) |
-| `install.sh` | Linux/macOS bash installer |
-
-## Usage
-
-After installation, launch opencode and use these commands:
-
-| Command | Action |
-|---------|--------|
-| `ulw` / `ultrawork` | Activate ALL agents in parallel |
-| `Tab` | Cycle agents: build → plan → caveman |
-| `@security-auditor` | Run security audit on code |
-| `@docs-writer` | Generate documentation |
-| `@refactor <files>` | Refactor specific files |
-| `context7 <query>` | Search library documentation |
-| `gh_grep <pattern>` | Search GitHub code examples |
-| *skill name in prompt* | Skills auto-trigger: find, debug, test, perf, git, docker, etc. |
-
-All 50+ skills auto-register from `~/.config/opencode/skills/`. Just mention what you need and the appropriate skill activates.
+| `config/oh-my-openagent.json` | oh-my-openagent plugin config — models, team mode |
+| `config/AGENTS.md` | Global caveman instructions + skill references |
+| `config/skills/*/SKILL.md` | 51 built-in skills |
+| `config/skills.txt` | Inventory of all built-in skills |
+| `install.ps1` | Windows installer (works piped from irm) |
+| `install.sh` | Linux/macOS installer |
+| `CONTRIBUTING.md` | Guide for adding skills, plugins, themes |
+| `.github/workflows/ci.yml` | CI — validates config, skills, installers |
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| `bunx oh-my-openagent` not found | Ensure Bun is installed: `bun --version`. Install with `npm install -g bun` |
-| opencode not recognized | Install opencode: `npm install -g opencode-ai@latest` or see [opencode.ai/docs](https://opencode.ai/docs) |
-| Auth errors | Run `opencode auth login` and select your provider |
-| DeepSeek model fails | Check your OpenCode Go subscription and API key |
-| Team Mode not working | Verify `team_mode.enabled: true` in `oh-my-openagent.json` |
-| Skills not loading | Check `~/.config/opencode/skills/` exists with SKILL.md files |
-| tmux error on Windows | Auto-disabled by the installer. Verify `tmux.enabled: false` |
+| `ConfigInvalidError` | Delete `~/.config/opencode/opencode.jsonc` (old format) |
+| Plugin not loading | `opencode` → type `/plugin remove <name>` then `/plugin add <name>` |
+| Skills not triggering | Ensure `~/.config/opencode/skills/<name>/SKILL.md` exists |
+| snip not reducing tokens | Run `snip --version`, reinstall with `go install github.com/edouard-claude/snip/cmd/snip@latest` |
+| opencode-mem not working | Check web UI at `http://localhost:4747` |
 
 ## Post-Install
 
-After running the installer, authenticate your providers:
-
 ```powershell
-opencode auth login
+opencode auth login   # Authenticate with your provider
 ```
-
-Select your provider (OpenCode Go, Anthropic, OpenAI, etc.) and follow the prompts.
 
 ## Contributing
 
-PRs are welcome! Feel free to open issues or submit improvements.
-
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feat/amazing-idea`
-3. Commit: `git commit -m "feat: add amazing idea"`
-4. Push: `git push origin feat/amazing-idea`
-5. Open a pull request
+See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome!
 
 ## License
 
-MIT — do whatever you want.
+MIT
 
 ---
 

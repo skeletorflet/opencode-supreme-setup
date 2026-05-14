@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate opencode.json
+        run: |
+          node -e "
+          const c = require('./config/opencode.json');
+          const v = ['model','default_agent','plugin','agent','skills'];
+          v.forEach(k => { if (!c[k]) { console.error('Missing:', k); process.exit(1) } });
+          console.log('opencode.json valid:', Object.keys(c).join(', '));
+          "
+      - name: Count skills
+        run: |
+          count=$(find config/skills -name 'SKILL.md' | wc -l)
+          echo "Skills: $count"
+          [ "$count" -ge 50 ] || (echo "Need 50+ skills"; exit 1)
+      - name: Verify skills.txt up to date
+        run: |
+          ls -d config/skills/*/ | xargs -I{} basename {} | sort > /tmp/skills_fs.txt
+          cat config/skills.txt | sort > /tmp/skills_file.txt
+          diff /tmp/skills_fs.txt /tmp/skills_file.txt || (echo "skills.txt out of date!"; exit 1)
+      - name: Check install scripts headers
+        run: |
+          head -1 install.ps1 | grep -q 'pwsh' || (echo "install.ps1 bad shebang"; exit 1)
+          head -1 install.sh | grep -q 'bash' || (echo "install.sh bad shebang"; exit 1)
