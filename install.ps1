@@ -3,7 +3,9 @@
 # One-command setup with oh-my-openagent, caveman mode, and deepseek-v4-flash
 
 $ErrorActionPreference = "Stop"
-$RepoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptPath = if ($MyInvocation.MyCommand.Path) { $MyInvocation.MyCommand.Path } else { $null }
+$RepoDir = if ($ScriptPath) { Split-Path -Parent $ScriptPath } else { $null }
+$ConfigUrl = "https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
 $ConfigDir = "$env:USERPROFILE\.config\opencode"
 $HostUI = (Get-Host).UI.RawUI
 if ($HostUI) { $HostUI.ForegroundColor = "Green" }
@@ -109,14 +111,25 @@ try {
 
 # === STEP 4: Copy config files ===
 Write-Step "Copying configuration files..."
-if (Test-Path "$RepoDir\config") {
-    if (-not (Test-Path $ConfigDir)) {
-        New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
-    }
+if (-not (Test-Path $ConfigDir)) {
+    New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
+}
+if ($RepoDir -and (Test-Path "$RepoDir\config")) {
     Copy-Item -Path "$RepoDir\config\*" -Destination $ConfigDir -Force -Recurse
-    Write-OK "Config files copied to $ConfigDir"
+    Write-OK "Config files copied from local repo"
 } else {
-    Write-Warn "No config/ directory found in repo"
+    Write-Info "Downloading config files from GitHub..."
+    $files = @("opencode.jsonc", "oh-my-openagent.json", "AGENTS.md")
+    foreach ($f in $files) {
+        try {
+            $url = "$ConfigUrl/$f"
+            $dest = Join-Path $ConfigDir $f
+            Invoke-RestMethod -Uri $url -OutFile $dest
+            Write-OK "Downloaded $f"
+        } catch {
+            Write-Warn "Failed to download $f : $_"
+        }
+    }
 }
 
 # === STEP 5: Set deepseek-v4-flash on ALL agents ===
