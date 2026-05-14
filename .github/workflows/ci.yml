@@ -30,7 +30,7 @@ jobs:
       - name: Verify skills.txt up to date
         run: |
           ls -d config/skills/*/ | xargs -I{} basename {} | sort > /tmp/skills_fs.txt
-          cat config/skills.txt | sort > /tmp/skills_file.txt
+          tr -d '\r' < config/skills.txt | sort > /tmp/skills_file.txt
           diff /tmp/skills_fs.txt /tmp/skills_file.txt || (echo "skills.txt out of date!"; exit 1)
       - name: Check install scripts headers
         run: |
