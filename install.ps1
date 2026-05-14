@@ -31,23 +31,23 @@ $Logo = @"
 "@
 
 function Write-Logo { Clear-Host; Write-Host $Logo -ForegroundColor Cyan }
-function Write-Step { param([string]$S) Write-Host "`n  ── $S ──" -ForegroundColor Cyan -Style Bold }
+function Write-Step { param([string]$S) Write-Host "`n── $S ──" -ForegroundColor Cyan }
 function Write-OK   { param([string]$S) Write-Host "  ✓ $S" -ForegroundColor Green }
 function Write-Warn { param([string]$S) Write-Host "  ⚠ $S" -ForegroundColor Yellow }
 function Write-Info { param([string]$S) Write-Host "    $S" -ForegroundColor DarkGray }
-function Write-Sec  { param([string]$S) Write-Host "`n  ═══ $S ═══" -ForegroundColor Magenta }
-function Test-Cmd   { param([string]$C) (Get-Command $C -ErrorAction SilentlyContinue) -ne $null }
+function Write-Sec  { param([string]$S) Write-Host "`n═══ $S ═══" -ForegroundColor Magenta }
 function Get-YesNo  { param([string]$P) if ($NonInteractive) { $true } else { (Read-Host "  ? $P (y/n)") -eq 'y' } }
 
 # Modern Progress Loader for PowerShell
 function Invoke-Progress {
-  param([string]$N, [scriptblock]$B)
+  param([string]$N, [scriptblock]$B, [array]$ArgList = @())
   $frames = @('⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏')
   $i = 0
 
   Write-Host "  $($frames[0]) $N ..." -NoNewline -ForegroundColor DarkGray
 
-  $job = Start-Job -ScriptBlock $B
+  # Ensure the script block returns a boolean or exits with non-zero on failure
+  $job = Start-Job -ScriptBlock $B -ArgumentList $ArgList
   while ($job.State -eq 'Running') {
     $frame = $frames[$i % $frames.Count]
     Write-Host "`r  $frame $N ..." -NoNewline -ForegroundColor Cyan
@@ -56,14 +56,15 @@ function Invoke-Progress {
   }
 
   $result = Receive-Job -Job $job
-  $result | Out-File -FilePath $using:LogFile -Append
-  $exitCode = $job.ChildJobs[0].ExitCode
+  $result | Out-File -FilePath $LogFile -Append
+  $success = $result -contains $true -or $job.ChildJobs[0].ExitCode -eq 0
+  if ($result -contains $false) { $success = $false }
+
   Remove-Job $job
 
-  # Clear line (approximation in PS)
   Write-Host "`r                                                                " -NoNewline
 
-  if ($exitCode -eq 0 -or $null -eq $exitCode) {
+  if ($success) {
     Write-Host "`r  ✓ $N" -ForegroundColor Green
     return $true
   } else {
@@ -72,38 +73,31 @@ function Invoke-Progress {
   }
 }
 
-function Add-Plugin {
-  param([string]$Pkg)
-  if (-not (Test-Path $ocConfig)) { return $false }
-  try {
-    npm install -g $Pkg 2>&1 | Out-Null
-    $oc = Get-Content $ocConfig -Raw | ConvertFrom-Json
-    if ($oc.plugin -notcontains $Pkg) { $oc.plugin += $Pkg; $oc | ConvertTo-Json -Depth 10 | Set-Content $ocConfig -Encoding UTF8 }
-    return $true
-  } catch { return $false }
-}
-
 # ── MAIN ────────────────────────────────────────────────────────────────────
 Write-Logo
-Write-Host "  Ultimate OpenCode Experience" -ForegroundColor White -Style Bold
+Write-Host "  Ultimate OpenCode Experience" -ForegroundColor White
 Write-Host "  150+ skills · 13 plugins · SDD · self-healing · dashboard · caveman-v4`n" -ForegroundColor DarkGray
 
 # ── Step 0: Prerequisites ───────────────────────────────────────────────────
 Write-Step "Prerequisites"
-Invoke-Progress -N "Node.js 18+" -B { if (Test-Cmd node) { $v = node --version; return $v -match "v(1[89]|[2-9]\d)" } else { return $false } }
+Invoke-Progress -N "Node.js 18+" -B {
+  if (Get-Command node -ErrorAction SilentlyContinue) {
+    return (node --version) -match "v(1[89]|[2-9]\d)"
+  } else { return $false }
+}
 
 # ── Step 1: OpenCode ────────────────────────────────────────────────────────
 Write-Step "OpenCode"
 Invoke-Progress -N "Check/install opencode" -B {
-  if (Test-Cmd opencode) { return $true }
-  npm install -g opencode-ai@latest 2>&1 | Out-Null; return (Test-Cmd opencode)
+  if (Get-Command opencode -ErrorAction SilentlyContinue) { return $true }
+  npm install -g opencode-ai@latest 2>&1 | Out-Null; return [bool](Get-Command opencode -ErrorAction SilentlyContinue)
 }
 
 # ── Step 2: Bun ─────────────────────────────────────────────────────────────
 Write-Step "Bun"
 Invoke-Progress -N "Check/install bun" -B {
-  if (Test-Cmd bun) { return $true }
-  npm install -g bun 2>&1 | Out-Null; return (Test-Cmd bun)
+  if (Get-Command bun -ErrorAction SilentlyContinue) { return $true }
+  npm install -g bun 2>&1 | Out-Null; return [bool](Get-Command bun -ErrorAction SilentlyContinue)
 }
 
 # ── Step 3: Provider subs ───────────────────────────────────────────────────
@@ -124,29 +118,40 @@ Write-Info "Flags: $flags"
 # ── Step 4: oh-my-openagent ─────────────────────────────────────────────────
 Write-Step "oh-my-openagent"
 Invoke-Progress -N "Install plugin" -B {
-  $f = $using:flags -split " " | Where-Object { $_ }
+  param($f_str)
+  $f = $f_str -split " " | Where-Object { $_ }
   try { bunx oh-my-openagent install --no-tui @f --skip-auth 2>&1; $true }
   catch { try { bunx oh-my-openagent install --no-tui --claude=no --gemini=no --copilot=no --opencode-go=yes --skip-auth 2>&1; $true } catch { $false } }
-}
+} -ArgList $flags
 
 # ── Step 5: Config files ────────────────────────────────────────────────────
 Write-Step "Configuration"
-Invoke-Progress -N "Cleanup old configs" -B { Get-ChildItem $using:ConfigDir -Filter "opencode.jsonc*" -ErrorAction SilentlyContinue | Remove-Item -Force }
+Invoke-Progress -N "Cleanup old configs" -B {
+  $c = "$env:USERPROFILE\.config\opencode"
+  Get-ChildItem $c -Filter "opencode.jsonc*" -ErrorAction SilentlyContinue | Remove-Item -Force
+  return $true
+}
+
 if (-not (Test-Path $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
 $ocConfig = "$ConfigDir\opencode.json"
 
-if ($RepoDir -and (Test-Path "$RepoDir\config")) {
-  Invoke-Progress -N "Sync local config" -B { Copy-Item -Path "$using:RepoDir\config\*" -Destination $using:ConfigDir -Force -Recurse; $true }
+if ($null -ne $RepoDir -and (Test-Path "$RepoDir\config")) {
+  Invoke-Progress -N "Sync local config" -B {
+    param($src, $dst)
+    Copy-Item -Path "$src\config\*" -Destination "$dst" -Force -Recurse; return $true
+  } -ArgList $RepoDir, $ConfigDir
 } else {
-  Invoke-Progress -N "Download opencode.json" -B { Invoke-RestMethod -Uri "$using:ConfigUrl/opencode.json" -OutFile $using:ocConfig; $true }
-  Invoke-Progress -N "Download oh-my-openagent.json" -B { Invoke-RestMethod -Uri "$using:ConfigUrl/oh-my-openagent.json" -OutFile "$using:ConfigDir\oh-my-openagent.json"; $true }
-  Invoke-Progress -N "Download AGENTS.md" -B { Invoke-RestMethod -Uri "$using:ConfigUrl/AGENTS.md" -OutFile "$using:ConfigDir\AGENTS.md"; $true }
+  Invoke-Progress -N "Download opencode.json" -B { param($url, $file) Invoke-RestMethod -Uri "$url/opencode.json" -OutFile "$file"; return $true } -ArgList $ConfigUrl, $ocConfig
+  Invoke-Progress -N "Download oh-my-openagent.json" -B { param($url, $dir) Invoke-RestMethod -Uri "$url/oh-my-openagent.json" -OutFile "$dir\oh-my-openagent.json"; return $true } -ArgList $ConfigUrl, $ConfigDir
+  Invoke-Progress -N "Download AGENTS.md" -B { param($url, $dir) Invoke-RestMethod -Uri "$url/AGENTS.md" -OutFile "$dir\AGENTS.md"; return $true } -ArgList $ConfigUrl, $ConfigDir
   Invoke-Progress -N "Download 53 skills" -B {
-    $sd = Join-Path $using:ConfigDir "skills"; $list = (Invoke-RestMethod -Uri "$using:ConfigUrl/skills.txt") -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    foreach ($s in $list) { $d = Join-Path $sd $s; New-Item -ItemType Directory -Path $d -Force | Out-Null; try { Invoke-RestMethod -Uri "$using:ConfigUrl/skills/$s/SKILL.md" -OutFile (Join-Path $d "SKILL.md") } catch {} }
-    $true
-  }
+    param($url, $dir)
+    $sd = Join-Path $dir "skills"; $list = (Invoke-RestMethod -Uri "$url/skills.txt") -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    foreach ($s in $list) { $d = Join-Path $sd $s; New-Item -ItemType Directory -Path $d -Force | Out-Null; try { Invoke-RestMethod -Uri "$url/skills/$s/SKILL.md" -OutFile (Join-Path $d "SKILL.md") } catch {} }
+    return $true
+  } -ArgList $ConfigUrl, $ConfigDir
 }
+
 # Register plugin
 if (Test-Path $ocConfig) {
   $oc = Get-Content $ocConfig -Raw | ConvertFrom-Json
@@ -173,28 +178,31 @@ if (-not $NonInteractive -and (Test-Path $omoConfig)) {
 Write-Step "Platform optimizations"
 if (Test-Path $omoConfig) {
   Invoke-Progress -N "Check tmux compatibility" -B {
-    $omo = Get-Content $using:omoConfig -Raw | ConvertFrom-Json
-    if ($using:IsWin) { $omo.tmux.enabled = $false }
-    $omo | ConvertTo-Json -Depth 10 | Set-Content $using:omoConfig -Encoding UTF8; $true
-  }
+    param($path, $win)
+    $omo = Get-Content $path -Raw | ConvertFrom-Json
+    if ($win) { $omo.tmux.enabled = $false }
+    $omo | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8; return $true
+  } -ArgList $omoConfig, $IsWin
+
   if ($modelId) {
     Invoke-Progress -N "Apply model overrides" -B {
-      $omo = Get-Content $using:omoConfig -Raw | ConvertFrom-Json
-      foreach ($a in $omo.agents.PSObject.Properties) { $a.Value.model = $using:modelId; $a.Value.PSObject.Properties.Remove("fallback_models") }
-      foreach ($c in $omo.categories.PSObject.Properties) { $c.Value.model = $using:modelId; $c.Value.PSObject.Properties.Remove("fallback_models") }
-      $omo | ConvertTo-Json -Depth 10 | Set-Content $using:omoConfig -Encoding UTF8; $true
-    }
+      param($path, $mid)
+      $omo = Get-Content $path -Raw | ConvertFrom-Json
+      foreach ($a in $omo.agents.PSObject.Properties) { $a.Value.model = $mid; if ($a.Value.PSObject.Properties['fallback_models']) { $a.Value.PSObject.Properties.Remove("fallback_models") } }
+      foreach ($c in $omo.categories.PSObject.Properties) { $c.Value.model = $mid; if ($c.Value.PSObject.Properties['fallback_models']) { $c.Value.PSObject.Properties.Remove("fallback_models") } }
+      $omo | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8; return $true
+    } -ArgList $omoConfig, $modelId
   }
 }
 
 # ── Step 7: Dev tools ───────────────────────────────────────────────────────
 Write-Step "Developer tools"
-Invoke-Progress -N "Comment checker" -B { npm install -g @code-yeongyu/comment-checker 2>&1 | Out-Null; $true }
-Invoke-Progress -N "AST-grep" -B { npm install -g @ast-grep/cli 2>&1 | Out-Null; $true }
+Invoke-Progress -N "Comment checker" -B { npm install -g @code-yeongyu/comment-checker 2>&1 | Out-Null; return $true }
+Invoke-Progress -N "AST-grep" -B { npm install -g @ast-grep/cli 2>&1 | Out-Null; return $true }
 Invoke-Progress -N "GitHub CLI" -B {
-  if (Test-Cmd gh) { $true }
-  elseif ($IsWin) { winget install --id GitHub.cli --silent --accept-package-agreements 2>&1 | Out-Null; $true }
-  else { $false }
+  if (Get-Command gh -ErrorAction SilentlyContinue) { return $true }
+  elseif ($env:OS -match "Windows") { winget install --id GitHub.cli --silent --accept-package-agreements 2>&1 | Out-Null; return [bool](Get-Command gh -ErrorAction SilentlyContinue) }
+  else { return $false }
 }
 
 # ── Step 8: Supreme Plugins ────────────────────────────────────────────────
@@ -211,7 +219,9 @@ $plugins = @(
   @{pkg="opencode-smart-title";       desc="Smart titles"},
   @{pkg="ocwatch";                    desc="Visual dashboard"}
 )
-foreach ($p in $plugins) { Invoke-Progress -N $p.desc -B { npm install -g $using:p.pkg 2>&1 | Out-Null; $true } }
+foreach ($p in $plugins) {
+  Invoke-Progress -N $p.desc -B { param($pkg) npm install -g $pkg 2>&1 | Out-Null; return $true } -ArgList $p.pkg
+}
 
 # Register plugins
 if (Test-Path $ocConfig) {
@@ -222,30 +232,30 @@ if (Test-Path $ocConfig) {
 
 # ── Step 9: OpenSkills ─────────────────────────────────────────────────────
 Write-Step "OpenSkills"
-Invoke-Progress -N "Install anthropics/skills" -B { npx openskills install anthropics/skills -y 2>&1 | Out-Null; $true }
-Invoke-Progress -N "Install openskills CLI" -B { npm install -g openskills 2>&1 | Out-Null; $true }
-Invoke-Progress -N "Sync to AGENTS.md" -B { npx openskills sync -y -o "$using:ConfigDir\AGENTS.md" 2>&1 | Out-Null; $true }
+Invoke-Progress -N "Install anthropics/skills" -B { npx openskills install anthropics/skills -y 2>&1 | Out-Null; return $true }
+Invoke-Progress -N "Install openskills CLI" -B { npm install -g openskills 2>&1 | Out-Null; return $true }
+Invoke-Progress -N "Sync to AGENTS.md" -B { param($dir) npx openskills sync -y -o "$dir\AGENTS.md" 2>&1 | Out-Null; return $true } -ArgList $ConfigDir
 
 # ── Step 10: Optional ──────────────────────────────────────────────────────
 if (Get-YesNo "Install agentsys (49 agents)?") {
-  Invoke-Progress -N "agentsys" -B { npm install -g agentsys 2>&1 | Out-Null; $true }
+  Invoke-Progress -N "agentsys" -B { npm install -g agentsys 2>&1 | Out-Null; return $true }
 }
 
 # ── Step 11: Optional extras ──────────────────────────────────────────────
 Write-Step "Optional extras"
 if (Get-YesNo "Install supermemory?") {
-  Invoke-Progress -N "Supermemory" -B { bunx opencode-supermemory@latest install --no-tui 2>&1 | Out-Null; $true }
+  Invoke-Progress -N "Supermemory" -B { bunx opencode-supermemory@latest install --no-tui 2>&1 | Out-Null; return $true }
 }
 if (Get-YesNo "Install firecrawl?") {
-  Invoke-Progress -N "Firecrawl CLI" -B { npm install -g firecrawl-cli 2>&1 | Out-Null; $true }
+  Invoke-Progress -N "Firecrawl CLI" -B { npm install -g firecrawl-cli 2>&1 | Out-Null; return $true }
 }
 if (Get-YesNo "Install WakaTime?") {
-  Invoke-Progress -N "WakaTime" -B { npm install -g opencode-wakatime 2>&1 | Out-Null; $true }
+  Invoke-Progress -N "WakaTime" -B { npm install -g opencode-wakatime 2>&1 | Out-Null; return $true }
 }
 
 # ── Step 12: Verify ───────────────────────────────────────────────────────
 Write-Step "Verification"
-Invoke-Progress -N "oh-my-openagent doctor" -B { bunx oh-my-openagent doctor 2>&1 | Out-Null; $true }
+Invoke-Progress -N "oh-my-openagent doctor" -B { bunx oh-my-openagent doctor 2>&1 | Out-Null; return $true }
 
 # ── Step 13: Summary ──────────────────────────────────────────────────────
 Write-Sec "Setup Complete!"

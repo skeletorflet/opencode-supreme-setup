@@ -42,7 +42,8 @@ run() {
   local pid
   local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 
-  printf "  ${C}⠋${NC} ${name} ..."
+  # Ensure the line is fresh
+  printf "${CLEAR_LINE}  ${C}⠋${NC} ${name} ..."
 
   # Run command in background, redirecting output to a temporary file
   tmp_out=$(mktemp)
