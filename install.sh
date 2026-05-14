@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OpenCode Supreme Setup v3.0
+# OpenCode Supreme Setup v4.0
 set -e
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -25,7 +25,7 @@ logo() {
   echo '  ║      ╚════██║██║   ██║██╔═══╝ ██╔══██╗  ║'
   echo '  ║      ███████║╚██████╔╝██║     ██║  ██║  ║'
   echo '  ║      ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝  ║'
-  echo '  ║    SUPREME SETUP — v3.0                  ║'
+  echo '  ║    SUPREME SETUP — v4.0                  ║'
   echo '  ╚══════════════════════════════════════════╝'
   echo -e "${NC}"
 }
@@ -39,7 +39,7 @@ run() {
 # ── MAIN ──
 logo
 echo -e "${W}  One-command setup — the ULTIMATE OpenCode experience${NC}"
-echo -e "${D}  130+ skills · 12 plugins · memory · snip · caveman · deepseek-v4-flash${NC}"
+echo -e "${D}  150+ skills · 13 plugins · SDD · self-healing · dashboard · caveman-v4${NC}"
 
 # Step 0: Prerequisites
 step "Prerequisites"
@@ -147,6 +147,7 @@ fi
 # Step 7: Dev tools
 step "Developer tools"
 run "Comment checker" bash -c "npm install -g @code-yeongyu/comment-checker 2>/dev/null"
+run "AST-grep" bash -c "npm install -g @ast-grep/cli 2>/dev/null"
 run "GitHub CLI" bash -c "
   if command -v gh &>/dev/null; then true
   elif command -v brew &>/dev/null; then brew install gh 2>/dev/null
@@ -164,7 +165,8 @@ for plugin in \
   "opencode-background-agents|Async agents" \
   "opencode-worktree|Git worktrees" \
   "opencode-dynamic-context-pruning|Context pruning" \
-  "opencode-smart-title|Session titles"; do
+  "opencode-smart-title|Session titles" \
+  "ocwatch|Visual dashboard"; do
   pkg="${plugin%%|*}"; desc="${plugin##*|}"
   run "$desc" bash -c "npm install -g $pkg 2>/dev/null"
 done

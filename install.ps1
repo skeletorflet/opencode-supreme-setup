@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# OpenCode Supreme Setup v3.0 — ALL the best of opencode ecosystem
+# OpenCode Supreme Setup v4.0 — ALL the best of opencode ecosystem
 param(
   [switch]$NonInteractive,
   [string]$Claude = "",
@@ -25,7 +25,7 @@ $Logo = @"
   ║      ╚════██║██║   ██║██╔═══╝ ██╔══██╗  ║
   ║      ███████║╚██████╔╝██║     ██║  ██║  ║
   ║      ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝  ║
-  ║    SUPREME SETUP — v3.0                  ║
+  ║    SUPREME SETUP — v4.0                  ║
   ╚══════════════════════════════════════════╝
 "@
 
@@ -59,7 +59,7 @@ function Add-Plugin {
 # ── MAIN ────────────────────────────────────────────────────────────────────
 Write-Logo
 Write-Host "  One-command setup — the ULTIMATE OpenCode experience" -ForegroundColor White
-Write-Host "  130+ skills · 12 plugins · memory · snip · caveman · deepseek-v4-flash`n" -ForegroundColor DarkGray
+Write-Host "  150+ skills · 13 plugins · SDD · self-healing · dashboard · caveman-v4`n" -ForegroundColor DarkGray
 
 # ── Step 0: Prerequisites ───────────────────────────────────────────────────
 Write-Step "Prerequisites"
@@ -167,6 +167,9 @@ Invoke-Progress -N "Comment checker" -B {
   try { bunx @code-yeongyu/comment-checker --version 2>&1 | Out-Null; $true }
   catch { try { npm install -g @code-yeongyu/comment-checker 2>&1 | Out-Null; $true } catch { $false } }
 }
+Invoke-Progress -N "AST-grep" -B {
+  try { npm install -g @ast-grep/cli 2>&1 | Out-Null; $true } catch { $false }
+}
 Invoke-Progress -N "GitHub CLI" -B {
   if (Test-Cmd gh) { $true }
   elseif ($IsWin) { try { winget install --id GitHub.cli --silent --accept-package-agreements 2>&1 | Out-Null; $env:Path = [Environment]::GetEnvironmentVariable("Path","User"); (Test-Cmd gh) } catch { $false } }
@@ -184,7 +187,8 @@ $plugins = @(
   @{pkg="opencode-background-agents"; desc="Async agent delegation"},
   @{pkg="opencode-worktree";          desc="Zero-friction isolated git worktrees"},
   @{pkg="opencode-dynamic-context-pruning"; desc="Auto-prune obsolete tool outputs"},
-  @{pkg="opencode-smart-title";       desc="Auto-generate session titles"}
+  @{pkg="opencode-smart-title";       desc="Auto-generate session titles"},
+  @{pkg="ocwatch";                    desc="Real-time visual monitoring dashboard"}
 )
 foreach ($p in $plugins) { Invoke-Progress -N $p.desc -B { Add-Plugin $p.pkg } }
 

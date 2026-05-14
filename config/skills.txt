@@ -49,3 +49,5 @@ test
 typescript
 ui
 webhook
+openspec
+self-healing

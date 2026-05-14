@@ -14,7 +14,8 @@
     "opencode-background-agents",
     "opencode-worktree",
     "opencode-dynamic-context-pruning",
-    "opencode-smart-title"
+    "opencode-smart-title",
+    "ocwatch"
   ],
   "agent": {
     "caveman": {
@@ -40,6 +41,18 @@
       "description": "Aggressive code refactoring and cleanup",
       "model": "opencode-go/deepseek-v4-flash",
       "prompt": "You are a code refactoring specialist. Improve code quality, reduce duplication, modernize patterns, and enhance readability without changing functionality. Always preserve behavior."
+    },
+    "spec-architect": {
+      "mode": "subagent",
+      "description": "Architects technical specifications (SDD)",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a Technical Architect. Your mission is to create perfect SPEC.md files for Spec-Driven Development. Analyze requirements, define architecture, and create actionable implementation plans. No code, just strategy."
+    },
+    "self-healer": {
+      "mode": "subagent",
+      "description": "Autonomous debugging and error correction",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a Self-Healing Agent. Your sole purpose is to fix errors. When a test or build fails, analyze the output, find the bug, and apply the fix. Be fast, be silent, be effective."
     }
   },
   "skills": {
