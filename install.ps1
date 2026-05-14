@@ -1,278 +1,339 @@
 #!/usr/bin/env pwsh
-# OpenCode Supreme Setup v4.0 — ALL the best of opencode ecosystem
+# OpenCode Supreme Setup v4.0
 param(
   [switch]$NonInteractive,
-  [string]$Claude = "",
-  [string]$OpenAI = "",
-  [string]$Gemini = "",
-  [string]$Copilot = "",
+  [string]$Claude     = "",
+  [string]$OpenAI     = "",
+  [string]$Gemini     = "",
+  [string]$Copilot    = "",
   [string]$OpenCodeGo = "yes"
 )
-
 $ErrorActionPreference = "Continue"
+
+# ── Monokai Pastel Palette ─────────────────────────────────────────────────
+$ESC    = [char]27
+$R      = "$ESC[0m";  $B = "$ESC[1m";  $DIM = "$ESC[2m"
+$PURPLE = "$ESC[38;5;141m"   # lavender   #AB9DF2
+$GREEN  = "$ESC[38;5;114m"   # sage       #A9DC76
+$YELLOW = "$ESC[38;5;222m"   # honey      #FFD866
+$CYAN   = "$ESC[38;5;117m"   # sky        #78DCE8
+$WHITE  = "$ESC[38;5;253m"   # soft white #F8F8F2
+$GRAY   = "$ESC[38;5;242m"   # muted      #75715E
+$RED    = "$ESC[38;5;203m"   # pastel red #FF5555
+
+# Enable VT/ANSI on Windows
+if ($IsWindows) {
+  [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+  try {
+    Add-Type -TypeDefinition @'
+using System; using System.Runtime.InteropServices;
+public class VT {
+  [DllImport("kernel32")] public static extern bool GetConsoleMode(IntPtr h, out uint m);
+  [DllImport("kernel32")] public static extern bool SetConsoleMode(IntPtr h, uint m);
+  [DllImport("kernel32")] public static extern IntPtr GetStdHandle(int n);
+  public static void Enable() {
+    var h=GetStdHandle(-11); uint m=0; GetConsoleMode(h,out m); SetConsoleMode(h,m|4);
+  }
+}
+'@ -ErrorAction SilentlyContinue
+    [VT]::Enable()
+  } catch {}
+}
+
+# ── Paths & Logging ────────────────────────────────────────────────────────
 $ScriptPath = if ($MyInvocation.MyCommand.Path) { $MyInvocation.MyCommand.Path } else { $null }
-$RepoDir = if ($ScriptPath) { Split-Path -Parent $ScriptPath } else { $null }
-$ConfigUrl = "https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
-$ConfigDir = "$env:USERPROFILE\.config\opencode"
-$IsWin = $env:OS -match "Windows"
-$LogFile = "$env:TEMP\opencode_setup_$(Get-Date -Format 'yyyyMMdd_HHmm').log"
+$RepoDir    = if ($ScriptPath) { Split-Path -Parent $ScriptPath } else { $null }
+$ConfUrl    = "https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
+$ConfDir    = "$env:USERPROFILE\.config\opencode"
+$LogFile    = "$env:TEMP\oc_setup_$(Get-Date -Format 'yyyyMMdd_HHmm').log"
+"" | Set-Content $LogFile
 
-# ── UI ──────────────────────────────────────────────────────────────────────
-$Logo = @"
-  ╔══════════════════════════════════════════╗
-  ║      ███████╗██╗   ██╗██████╗ ██████╗   ║
-  ║      ██╔════╝██║   ██║██╔══██╗██╔══██╗  ║
-  ║      ███████╗██║   ██║██████╔╝██████╔╝  ║
-  ║      ╚════██║██║   ██║██╔═══╝ ██╔══██╗  ║
-  ║      ███████║╚██████╔╝██║     ██║  ██║  ║
-  ║      ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝  ║
-  ║    SUPREME SETUP — v4.0                  ║
-  ╚══════════════════════════════════════════╝
-"@
+# ── Progress state ─────────────────────────────────────────────────────────
+$script:Phase = 0; $TotalPhases = 10
 
-function Write-Logo { Clear-Host; Write-Host $Logo -ForegroundColor Cyan }
-function Write-Step { param([string]$S) Write-Host "`n── $S ──" -ForegroundColor Cyan }
-function Write-OK   { param([string]$S) Write-Host "  ✓ $S" -ForegroundColor Green }
-function Write-Warn { param([string]$S) Write-Host "  ⚠ $S" -ForegroundColor Yellow }
-function Write-Info { param([string]$S) Write-Host "    $S" -ForegroundColor DarkGray }
-function Write-Sec  { param([string]$S) Write-Host "`n═══ $S ═══" -ForegroundColor Magenta }
-function Get-YesNo  { param([string]$P) if ($NonInteractive) { $true } else { (Read-Host "  ? $P (y/n)") -eq 'y' } }
+# ── Header ─────────────────────────────────────────────────────────────────
+function Show-Header {
+  Clear-Host
+  Write-Host "${PURPLE}${B}  ╭──────────────────────────────────────────────────────╮"
+  Write-Host "  │  ✦  OpenCode Supreme Setup                   v4.0  │"
+  Write-Host "  │     150+ skills · 13 plugins · SDD · caveman-v4     │"
+  Write-Host "  ╰──────────────────────────────────────────────────────╯${R}"
+}
 
-# Modern Progress Loader for PowerShell
-function Invoke-Progress {
-  param([string]$N, [scriptblock]$B, [array]$ArgList = @())
-  $frames = @('⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏')
-  $i = 0
-  
-  Write-Host "  $($frames[0]) $N ..." -NoNewline -ForegroundColor DarkGray
-  
-  # Ensure the script block returns a boolean or exits with non-zero on failure
-  $job = Start-Job -ScriptBlock $B -ArgumentList $ArgList
+# ── Progress bar ───────────────────────────────────────────────────────────
+function Get-Bar {
+  $pct   = [math]::Floor($script:Phase * 100 / $TotalPhases)
+  $fill  = [math]::Floor($pct * 22 / 100)
+  $empty = 22 - $fill
+  "${PURPLE}$('█' * $fill)${GRAY}$('░' * $empty)${R} ${GRAY}$("{0,3}" -f $pct)%${R}"
+}
+
+# ── Section header ─────────────────────────────────────────────────────────
+function Section([string]$Title) {
+  $script:Phase++
+  $bar = Get-Bar
+  Write-Host "`n${PURPLE}${B}  ╌╌  $($Title.PadRight(36))${R}${GRAY} [$("{0:D2}" -f $script:Phase)/$("{0:D2}" -f $TotalPhases)]${R}  $bar"
+}
+
+# ── Spinner task ───────────────────────────────────────────────────────────
+# Runs a scriptblock in a background job with a live spinner.
+# Pass $true as last arg for "soft" (ignore failures).
+$Frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+
+function Invoke-Task {
+  param([string]$Label, [scriptblock]$Body, [switch]$Soft)
+  $pad = $Label.PadRight(38)
+  Write-Host -NoNewline "    ${CYAN}⠋${R}  $pad"
+  $job = Start-Job -ScriptBlock $Body
+  $i   = 0
   while ($job.State -eq 'Running') {
-    $frame = $frames[$i % $frames.Count]
-    Write-Host "`r  $frame $N ..." -NoNewline -ForegroundColor Cyan
-    $i++
-    Start-Sleep -Milliseconds 100
+    $f = $Frames[$i % 10]
+    Write-Host -NoNewline "`r    ${CYAN}$f${R}  $pad"
+    $i++; Start-Sleep -Milliseconds 70
   }
-  
-  $result = Receive-Job -Job $job
-  $result | Out-File -FilePath $LogFile -Append
-  $success = $result -contains $true -or $job.ChildJobs[0].ExitCode -eq 0
-  if ($result -contains $false) { $success = $false }
-  
-  Remove-Job $job
-  
-  Write-Host "`r                                                                " -NoNewline
-  
-  if ($success) {
-    Write-Host "`r  ✓ $N" -ForegroundColor Green
-    return $true
-  } else {
-    Write-Host "`r  ✗ $N" -ForegroundColor Red
-    return $false
-  }
-}
-
-# ── MAIN ────────────────────────────────────────────────────────────────────
-Write-Logo
-Write-Host "  Ultimate OpenCode Experience" -ForegroundColor White
-Write-Host "  150+ skills · 13 plugins · SDD · self-healing · dashboard · caveman-v4`n" -ForegroundColor DarkGray
-
-# ── Step 0: Prerequisites ───────────────────────────────────────────────────
-Write-Step "Prerequisites"
-Invoke-Progress -N "Node.js 18+" -B { 
-  if (Get-Command node -ErrorAction SilentlyContinue) { 
-    return (node --version) -match "v(1[89]|[2-9]\d)" 
-  } else { return $false } 
-}
-
-# ── Step 1: OpenCode ────────────────────────────────────────────────────────
-Write-Step "OpenCode"
-Invoke-Progress -N "Check/install opencode" -B {
-  if (Get-Command opencode -ErrorAction SilentlyContinue) { return $true }
-  npm install -g opencode-ai@latest 2>&1 | Out-Null; return [bool](Get-Command opencode -ErrorAction SilentlyContinue)
-}
-
-# ── Step 2: Bun ─────────────────────────────────────────────────────────────
-Write-Step "Bun"
-Invoke-Progress -N "Check/install bun" -B {
-  if (Get-Command bun -ErrorAction SilentlyContinue) { return $true }
-  npm install -g bun 2>&1 | Out-Null; return [bool](Get-Command bun -ErrorAction SilentlyContinue)
-}
-
-# ── Step 3: Provider subs ───────────────────────────────────────────────────
-Write-Step "Provider subscriptions"
-if (-not $NonInteractive) {
-  $r = $null; while ($null -eq $r) {
-    $i = Read-Host "  ? Claude Pro/Max? (y/n/max20)"
-    if ($i -eq 'y') { $Claude = 'yes'; $r = $true } elseif ($i -eq 'max20') { $Claude = 'max20'; $r = $true } elseif ($i -eq 'n') { $Claude = 'no'; $r = $true } else { Write-Warn "y, n, or max20" }
-  }
-  if (-not $OpenAI)   { $OpenAI   = if ((Read-Host "  ? ChatGPT Plus? (y/n)") -eq 'y') { 'yes' } else { 'no' } }
-  if (-not $Gemini)   { $Gemini   = if ((Read-Host "  ? Gemini? (y/n)") -eq 'y') { 'yes' } else { 'no' } }
-  if (-not $Copilot)  { $Copilot  = if ((Read-Host "  ? Copilot? (y/n)") -eq 'y') { 'yes' } else { 'no' } }
-  if (-not $OpenCodeGo){$OpenCodeGo= if ((Read-Host "  ? OpenCode Go? (y/n)") -eq 'y') { 'yes' } else { 'no' } }
-}
-$flags = "--claude=$Claude --openai=$OpenAI --gemini=$Gemini --copilot=$Copilot --opencode-go=$OpenCodeGo"
-Write-Info "Flags: $flags"
-
-# ── Step 4: oh-my-openagent ─────────────────────────────────────────────────
-Write-Step "oh-my-openagent"
-Invoke-Progress -N "Install plugin" -B {
-  param($f_str)
-  $f = $f_str -split " " | Where-Object { $_ }
-  try { bunx oh-my-openagent install --no-tui @f --skip-auth 2>&1; $true }
-  catch { try { bunx oh-my-openagent install --no-tui --claude=no --gemini=no --copilot=no --opencode-go=yes --skip-auth 2>&1; $true } catch { $false } }
-} -ArgList $flags
-
-# ── Step 5: Config files ────────────────────────────────────────────────────
-Write-Step "Configuration"
-Invoke-Progress -N "Cleanup old configs" -B { 
-  $c = "$env:USERPROFILE\.config\opencode"
-  Get-ChildItem $c -Filter "opencode.jsonc*" -ErrorAction SilentlyContinue | Remove-Item -Force 
+  $out = Receive-Job $job 2>$null; Remove-Job $job
+  $out | Add-Content $LogFile -ErrorAction SilentlyContinue
+  $ok = ($job.ChildJobs.Count -eq 0) -or ($job.ChildJobs[0].State -eq 'Completed')
+  if ($ok) { Write-Host "`r    ${GREEN}✓${R}  ${WHITE}$pad${R}" }
+  else     { Write-Host "`r    ${RED}✗${R}  ${RED}$pad${R}  ${GRAY}↳ $LogFile${R}" }
+  if (-not $ok -and -not $Soft) { return $false }
   return $true
 }
 
-if (-not (Test-Path $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
-$ocConfig = "$ConfigDir\opencode.json"
+# ── Prompt  [Y/n]  Enter = Y ───────────────────────────────────────────────
+function Ask-YN([string]$Q, [string]$Def = "y") {
+  if ($NonInteractive) { return ($Def -eq "y") }
+  $hint = if ($Def -eq "y") { "${GREEN}${B}Y${R}${GRAY}/n${R}" } else { "${GRAY}y/${R}${RED}${B}N${R}" }
+  Write-Host -NoNewline "`n    ${YELLOW}?${R}  ${WHITE}$($Q.PadRight(42))${R}  ${GRAY}[${R}$hint${GRAY}]${R}  "
+  $ans = Read-Host
+  if ([string]::IsNullOrEmpty($ans)) { $ans = $Def }
+  return ($ans -match '^[Yy]')
+}
 
-if ($null -ne $RepoDir -and (Test-Path "$RepoDir\config")) {
-  Invoke-Progress -N "Sync local config" -B { 
-    param($src, $dst)
-    Copy-Item -Path "$src\config\*" -Destination "$dst" -Force -Recurse; return $true 
-  } -ArgList $RepoDir, $ConfigDir
+# ── MAIN ───────────────────────────────────────────────────────────────────
+Show-Header
+Write-Host "  ${GRAY}log → $LogFile${R}`n"
+
+# ─────────────────────────────────────────── [1] Prerequisites ──────────────
+Section "Prerequisites"
+Invoke-Task "Node.js 18+" -Soft -Body {
+  $v = node --version 2>$null
+  $v -match 'v(1[89]|[2-9]\d)'
+}
+Invoke-Task "PowerShell 7+" -Soft -Body {
+  $PSVersionTable.PSVersion.Major -ge 7
+}
+
+# ─────────────────────────────────────────── [2] Core Tools ─────────────────
+Section "Core Tools"
+Invoke-Task "opencode-ai" -Soft -Body {
+  if (Get-Command opencode -ErrorAction SilentlyContinue) { return $true }
+  npm install -g opencode-ai@latest 2>&1 | Out-Null; $true
+}
+Invoke-Task "bun runtime" -Soft -Body {
+  if (Get-Command bun -ErrorAction SilentlyContinue) { return $true }
+  npm install -g bun 2>&1 | Out-Null; $true
+}
+
+# ─────────────────────────────────────────── [3] Provider config ────────────
+Section "Provider Subscriptions"
+Write-Host "`n    ${GRAY}Select active subscriptions  (Enter = default shown)${R}"
+
+if (-not $NonInteractive) {
+  do {
+    Write-Host -NoNewline "`n    ${YELLOW}?${R}  ${WHITE}$("Claude Pro/Max?".PadRight(42))${R}  ${GRAY}[${R}${GREEN}${B}Y${R}${GRAY}/n/max20]${R}  "
+    $r = Read-Host; if ([string]::IsNullOrEmpty($r)) { $r = "n" }
+  } while ($r -notin @("y","yes","n","no","max20"))
+  $Claude     = switch ($r) { "max20" { "max20" } { $_ -match '^[Yy]' } { "yes" } default { "no" } }
+  $OpenAI     = if (Ask-YN "ChatGPT Plus?"  "n") { "yes" } else { "no" }
+  $Gemini     = if (Ask-YN "Gemini?"        "n") { "yes" } else { "no" }
+  $Copilot    = if (Ask-YN "Copilot?"       "n") { "yes" } else { "no" }
+  $OpenCodeGo = if (Ask-YN "OpenCode Go?"   "y") { "yes" } else { "no" }
+}
+$Flags = "--claude=$Claude --openai=$OpenAI --gemini=$Gemini --copilot=$Copilot --opencode-go=$OpenCodeGo"
+Write-Host "`n    ${GRAY}$Flags${R}"
+
+# ─────────────────────────────────────────── [4] oh-my-openagent ────────────
+Section "oh-my-openagent"
+$f = $Flags
+Invoke-Task "install orchestrator" -Soft -Body {
+  $args2 = $using:f -split " " | Where-Object { $_ }
+  bunx oh-my-openagent install --no-tui @args2 --skip-auth 2>&1 | Out-Null; $true
+}
+
+# ─────────────────────────────────────────── [5] Config + 53 skills ─────────
+Section "Config + 53 Skills"
+if (-not (Test-Path $ConfDir)) { New-Item -ItemType Directory -Path $ConfDir -Force | Out-Null }
+$d  = $ConfDir
+$u  = $ConfUrl
+$rd = $RepoDir
+$oc = "$ConfDir\opencode.json"
+
+Invoke-Task "cleanup legacy jsonc" -Soft -Body {
+  Get-ChildItem $using:d -Filter "opencode.jsonc*" -ErrorAction SilentlyContinue |
+    Remove-Item -Force; $true
+}
+
+if ($RepoDir -and (Test-Path "$RepoDir\config")) {
+  Invoke-Task "sync local config" -Soft -Body {
+    Copy-Item -Path "$($using:rd)\config\*" -Destination $using:d -Force -Recurse; $true
+  }
 } else {
-  Invoke-Progress -N "Download opencode.json" -B { param($url, $file) Invoke-RestMethod -Uri "$url/opencode.json" -OutFile "$file"; return $true } -ArgList $ConfigUrl, $ocConfig
-  Invoke-Progress -N "Download oh-my-openagent.json" -B { param($url, $dir) Invoke-RestMethod -Uri "$url/oh-my-openagent.json" -OutFile "$dir\oh-my-openagent.json"; return $true } -ArgList $ConfigUrl, $ConfigDir
-  Invoke-Progress -N "Download AGENTS.md" -B { param($url, $dir) Invoke-RestMethod -Uri "$url/AGENTS.md" -OutFile "$dir\AGENTS.md"; return $true } -ArgList $ConfigUrl, $ConfigDir
-  Invoke-Progress -N "Download 53 skills" -B {
-    param($url, $dir)
-    $sd = Join-Path $dir "skills"; $list = (Invoke-RestMethod -Uri "$url/skills.txt") -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    foreach ($s in $list) { $d = Join-Path $sd $s; New-Item -ItemType Directory -Path $d -Force | Out-Null; try { Invoke-RestMethod -Uri "$url/skills/$s/SKILL.md" -OutFile (Join-Path $d "SKILL.md") } catch {} }
-    return $true
-  } -ArgList $ConfigUrl, $ConfigDir
-}
-
-# Register plugin
-if (Test-Path $ocConfig) {
-  $oc = Get-Content $ocConfig -Raw | ConvertFrom-Json
-  if (-not ($oc.plugin -contains "oh-my-openagent")) { $oc.plugin = @("oh-my-openagent") + $oc.plugin; $oc | ConvertTo-Json -Depth 10 | Set-Content $ocConfig -Encoding UTF8 }
-}
-
-# ── Step 6: Model configuration ─────────────────────────────────────────────
-Write-Step "Model configuration"
-$omoConfig = "$ConfigDir\oh-my-openagent.json"
-$modelId = "opencode-go/deepseek-v4-flash"
-if (-not $NonInteractive -and (Test-Path $omoConfig)) {
-  Write-Host "    1) Keep oh-my-openagent defaults"
-  Write-Host "    2) DeepSeek V4 Flash on ALL agents"
-  Write-Host "    3) Custom model"
-  $choice = Read-Host "  ? Choose (1-3)"
-  switch ($choice) {
-    "1" { $modelId = $null }
-    "2" { $modelId = "opencode-go/deepseek-v4-flash" }
-    "3" { $modelId = Read-Host "  Enter full model" }
-    default { $modelId = $null }
+  Invoke-Task "opencode.json" -Soft -Body {
+    Invoke-RestMethod "$($using:u)/opencode.json" -OutFile $using:oc; $true
+  }
+  Invoke-Task "oh-my-openagent.json" -Soft -Body {
+    Invoke-RestMethod "$($using:u)/oh-my-openagent.json" -OutFile "$($using:d)\oh-my-openagent.json"; $true
+  }
+  Invoke-Task "AGENTS.md" -Soft -Body {
+    Invoke-RestMethod "$($using:u)/AGENTS.md" -OutFile "$($using:d)\AGENTS.md"; $true
+  }
+  Invoke-Task "53 built-in skills" -Soft -Body {
+    $sd = Join-Path $using:d "skills"
+    $list = (Invoke-RestMethod "$($using:u)/skills.txt") -split "`n" |
+              ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    foreach ($s in $list) {
+      $dir = Join-Path $sd $s; New-Item -ItemType Directory -Path $dir -Force | Out-Null
+      try { Invoke-RestMethod "$($using:u)/skills/$s/SKILL.md" -OutFile (Join-Path $dir "SKILL.md") } catch {}
+    }; $true
   }
 }
 
-Write-Step "Platform optimizations"
-if (Test-Path $omoConfig) {
-  Invoke-Progress -N "Check tmux compatibility" -B {
-    param($path, $win)
-    $omo = Get-Content $path -Raw | ConvertFrom-Json
-    if ($win) { $omo.tmux.enabled = $false }
-    $omo | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8; return $true
-  } -ArgList $omoConfig, $IsWin
-  
-  if ($modelId) {
-    Invoke-Progress -N "Apply model overrides" -B {
-      param($path, $mid)
-      $omo = Get-Content $path -Raw | ConvertFrom-Json
-      foreach ($a in $omo.agents.PSObject.Properties) { $a.Value.model = $mid; if ($a.Value.PSObject.Properties['fallback_models']) { $a.Value.PSObject.Properties.Remove("fallback_models") } }
-      foreach ($c in $omo.categories.PSObject.Properties) { $c.Value.model = $mid; if ($c.Value.PSObject.Properties['fallback_models']) { $c.Value.PSObject.Properties.Remove("fallback_models") } }
-      $omo | ConvertTo-Json -Depth 10 | Set-Content $path -Encoding UTF8; return $true
-    } -ArgList $omoConfig, $modelId
+# register plugin in config
+if (Test-Path $oc) {
+  try {
+    $cfg = Get-Content $oc -Raw | ConvertFrom-Json
+    if ($cfg.plugin -notcontains "oh-my-openagent") {
+      $cfg.plugin = @("oh-my-openagent") + @($cfg.plugin)
+      $cfg | ConvertTo-Json -Depth 10 | Set-Content $oc -Encoding UTF8
+    }
+  } catch {}
+}
+
+# ─────────────────────────────────────────── [6] Model config ───────────────
+Section "Model Configuration"
+$ModelId = ""; $OmoCfg = "$ConfDir\oh-my-openagent.json"
+if (-not $NonInteractive -and (Test-Path $OmoCfg)) {
+  Write-Host ""
+  Write-Host "    ${GRAY}1${R}  Keep defaults"
+  Write-Host "    ${GRAY}2${R}  DeepSeek V4 Flash  ${GRAY}(recommended)${R}"
+  Write-Host "    ${GRAY}3${R}  Custom model"
+  Write-Host -NoNewline "`n    ${YELLOW}?${R}  ${WHITE}$("Choose".PadRight(42))${R}  ${GRAY}[${R}${GREEN}${B}1${R}${GRAY}/2/3]${R}  "
+  $mc = Read-Host; if ([string]::IsNullOrEmpty($mc)) { $mc = "1" }
+  switch ($mc) {
+    "2" { $ModelId = "opencode-go/deepseek-v4-flash" }
+    "3" { Write-Host -NoNewline "    ${WHITE}Model ID:${R} "; $ModelId = Read-Host }
+  }
+  if ($ModelId) { Write-Host "    ${GRAY}→ $ModelId${R}" }
+}
+
+$omo = $OmoCfg; $win = $IsWindows
+Invoke-Task "tmux compatibility" -Soft -Body {
+  $c = Get-Content $using:omo -Raw | ConvertFrom-Json
+  if ($using:win -and $c.PSObject.Properties['tmux']) { $c.tmux.enabled = $false }
+  $c | ConvertTo-Json -Depth 10 | Set-Content $using:omo -Encoding UTF8; $true
+}
+
+if ($ModelId) {
+  $mid = $ModelId
+  Invoke-Task "apply model: $mid" -Soft -Body {
+    $c = Get-Content $using:omo -Raw | ConvertFrom-Json
+    foreach ($a in $c.agents.PSObject.Properties)     { $a.Value.model = $using:mid }
+    foreach ($a in $c.categories.PSObject.Properties) { $a.Value.model = $using:mid }
+    $c | ConvertTo-Json -Depth 10 | Set-Content $using:omo -Encoding UTF8; $true
   }
 }
 
-# ── Step 7: Dev tools ───────────────────────────────────────────────────────
-Write-Step "Developer tools"
-Invoke-Progress -N "Comment checker" -B { npm install -g @code-yeongyu/comment-checker 2>&1 | Out-Null; return $true }
-Invoke-Progress -N "AST-grep" -B { npm install -g @ast-grep/cli 2>&1 | Out-Null; return $true }
-Invoke-Progress -N "GitHub CLI" -B {
-  if (Get-Command gh -ErrorAction SilentlyContinue) { return $true }
-  elseif ($env:OS -match "Windows") { winget install --id GitHub.cli --silent --accept-package-agreements 2>&1 | Out-Null; return [bool](Get-Command gh -ErrorAction SilentlyContinue) }
-  else { return $false }
+# ─────────────────────────────────────────── [7] Developer Tools ────────────
+Section "Developer Tools"
+Invoke-Task "comment-checker" -Soft -Body { npm install -g @code-yeongyu/comment-checker 2>&1 | Out-Null; $true }
+Invoke-Task "ast-grep"        -Soft -Body { npm install -g @ast-grep/cli 2>&1 | Out-Null; $true }
+Invoke-Task "GitHub CLI"      -Soft -Body {
+  if (Get-Command gh -ErrorAction SilentlyContinue) { $true }
+  elseif ($IsWindows) { winget install --id GitHub.cli --silent --accept-package-agreements 2>&1 | Out-Null; $true }
+  else { $false }
 }
 
-# ── Step 8: Supreme Plugins ────────────────────────────────────────────────
-Write-Step "Supreme Plugins (10 total)"
-$plugins = @(
-  @{pkg="opencode-snippets";          desc="#snippet expansion"},
-  @{pkg="opencode-snip";              desc="Snip (-60-90% tokens)"},
-  @{pkg="opencode-notify";            desc="OS notifications"},
-  @{pkg="opencode-mem";               desc="Persistent memory"},
-  @{pkg="opencode-quota";             desc="Token tracking"},
-  @{pkg="opencode-background-agents"; desc="Async agents"},
-  @{pkg="opencode-worktree";          desc="Git worktrees"},
-  @{pkg="opencode-dynamic-context-pruning"; desc="Context pruning"},
-  @{pkg="opencode-smart-title";       desc="Smart titles"},
-  @{pkg="ocwatch";                    desc="Visual dashboard"}
+# ─────────────────────────────────────────── [8] Plugins (10) ───────────────
+Section "Plugins  (10)"
+$PluginList = @(
+  @{ pkg="opencode-snippets";                 lbl="#snippet text expansion"   },
+  @{ pkg="opencode-snip";                     lbl="snip  60-90% token savings"},
+  @{ pkg="opencode-notify";                   lbl="OS notifications"          },
+  @{ pkg="opencode-mem";                      lbl="persistent vector memory"  },
+  @{ pkg="opencode-quota";                    lbl="token + cost tracking"     },
+  @{ pkg="opencode-background-agents";        lbl="async agent delegation"    },
+  @{ pkg="opencode-worktree";                 lbl="isolated git worktrees"    },
+  @{ pkg="opencode-dynamic-context-pruning";  lbl="auto context pruning"      },
+  @{ pkg="opencode-smart-title";              lbl="smart session titles"      },
+  @{ pkg="ocwatch";                           lbl="visual dashboard  :3000"   }
 )
-foreach ($p in $plugins) { 
-  Invoke-Progress -N $p.desc -B { param($pkg) npm install -g $pkg 2>&1 | Out-Null; return $true } -ArgList $p.pkg
+foreach ($p in $PluginList) {
+  $pkg = $p.pkg; $lbl = $p.lbl
+  Invoke-Task $lbl -Soft -Body {
+    npm install -g $using:pkg 2>&1 | Out-Null; $true
+  }
+}
+# register in config
+if (Test-Path $oc) {
+  try {
+    $cfg = Get-Content $oc -Raw | ConvertFrom-Json
+    foreach ($p in $PluginList) {
+      if ($cfg.plugin -notcontains $p.pkg) { $cfg.plugin += $p.pkg }
+    }
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content $oc -Encoding UTF8
+  } catch {}
 }
 
-# Register plugins
-if (Test-Path $ocConfig) {
-  $oc = Get-Content $ocConfig -Raw | ConvertFrom-Json
-  foreach ($p in $plugins) { if ($oc.plugin -notcontains $p.pkg) { $oc.plugin += $p.pkg } }
-  $oc | ConvertTo-Json -Depth 10 | Set-Content $ocConfig -Encoding UTF8
+# ─────────────────────────────────────────── [9] OpenSkills (100+) ──────────
+Section "OpenSkills  (100+)"
+Invoke-Task "anthropics/skills"  -Soft -Body { npx openskills install anthropics/skills -y 2>&1 | Out-Null; $true }
+Invoke-Task "openskills CLI"     -Soft -Body { npm install -g openskills 2>&1 | Out-Null; $true }
+$amd = "$ConfDir\AGENTS.md"
+Invoke-Task "sync to AGENTS.md"  -Soft -Body { npx openskills sync -y -o $using:amd 2>&1 | Out-Null; $true }
+
+# ─────────────────────────────────────────── [10] Optional Extras ───────────
+Section "Optional Extras"
+if (Ask-YN "agentsys  (49 agents, 20 plugins)" "n") {
+  Invoke-Task "agentsys" -Soft -Body { npm install -g agentsys 2>&1 | Out-Null; $true }
+}
+if (Ask-YN "supermemory" "n") {
+  Invoke-Task "supermemory" -Soft -Body { bunx opencode-supermemory@latest install --no-tui 2>&1 | Out-Null; $true }
+}
+if (Ask-YN "firecrawl" "n") {
+  Invoke-Task "firecrawl" -Soft -Body { npm install -g firecrawl-cli 2>&1 | Out-Null; $true }
+}
+if (Ask-YN "WakaTime" "n") {
+  Invoke-Task "wakatime" -Soft -Body { npm install -g opencode-wakatime 2>&1 | Out-Null; $true }
+}
+if (Ask-YN "Themes  (ayu / lavi / moonlight / poimandres)" "n") {
+  foreach ($t in @("opencode-ayu-theme","lavi","opencode-moonlight-theme","opencode-ai-poimandres-theme")) {
+    $tn = $t
+    Invoke-Task $t -Soft -Body { npm install -g $using:tn 2>&1 | Out-Null; $true }
+  }
 }
 
-# ── Step 9: OpenSkills ─────────────────────────────────────────────────────
-Write-Step "OpenSkills"
-Invoke-Progress -N "Install anthropics/skills" -B { npx openskills install anthropics/skills -y 2>&1 | Out-Null; return $true }
-Invoke-Progress -N "Install openskills CLI" -B { npm install -g openskills 2>&1 | Out-Null; return $true }
-Invoke-Progress -N "Sync to AGENTS.md" -B { param($dir) npx openskills sync -y -o "$dir\AGENTS.md" 2>&1 | Out-Null; return $true } -ArgList $ConfigDir
+# ── Verify ─────────────────────────────────────────────────────────────────
+Write-Host "`n    ${DIM}verifying…${R}"
+Invoke-Task "oh-my-openagent doctor" -Soft -Body { bunx oh-my-openagent doctor 2>&1 | Out-Null; $true }
 
-# ── Step 10: Optional ──────────────────────────────────────────────────────
-if (Get-YesNo "Install agentsys (49 agents)?") {
-  Invoke-Progress -N "agentsys" -B { npm install -g agentsys 2>&1 | Out-Null; return $true }
+# ── Summary ────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "${GREEN}${B}  ╭──────────────────────────────────────────────────────╮"
+Write-Host "  │  ✦  Setup Complete!                                  │"
+Write-Host "  ╰──────────────────────────────────────────────────────╯${R}"
+Write-Host ""
+@(
+  @("opencode",        "launch"),
+  @("ocwatch",         "visual dashboard  :3000"),
+  @("ulw <task>",      "ultrawork (parallel agents)"),
+  @("@spec-architect", "spec-driven development"),
+  @("@self-healer",    "autonomous debugging"),
+  @("@refactor",       "clean code")
+) | ForEach-Object {
+  Write-Host "  ${CYAN}$($_[0].PadRight(22))${R}${GRAY}→${R}  $_[1]"
 }
-
-# ── Step 11: Optional extras ──────────────────────────────────────────────
-Write-Step "Optional extras"
-if (Get-YesNo "Install supermemory?") {
-  Invoke-Progress -N "Supermemory" -B { bunx opencode-supermemory@latest install --no-tui 2>&1 | Out-Null; return $true }
-}
-if (Get-YesNo "Install firecrawl?") {
-  Invoke-Progress -N "Firecrawl CLI" -B { npm install -g firecrawl-cli 2>&1 | Out-Null; return $true }
-}
-if (Get-YesNo "Install WakaTime?") {
-  Invoke-Progress -N "WakaTime" -B { npm install -g opencode-wakatime 2>&1 | Out-Null; return $true }
-}
-
-# ── Step 12: Verify ───────────────────────────────────────────────────────
-Write-Step "Verification"
-Invoke-Progress -N "oh-my-openagent doctor" -B { bunx oh-my-openagent doctor 2>&1 | Out-Null; return $true }
-
-# ── Step 13: Summary ──────────────────────────────────────────────────────
-Write-Sec "Setup Complete!"
-Write-Host @"
-  ╔══════════════════════════════════════════════════════╗
-  ║  🚀  opencode                  launch                ║
-  ║  📊  ocwatch                  visual dashboard       ║
-  ║  🔥  ulw <task>               ultrawork mode         ║
-  ║  🛡  @spec-architect          SDD planning           ║
-  ║  🩹  @self-healer            auto debugging         ║
-  ║  🔧  @refactor               clean code             ║
-  ║  🎯  150+ skills              auto-triggered         ║
-  ║  🧠  Persistent memory        cross-session context  ║
-  ║  ✂️  snip                     -60-90% token savings  ║
-  ╚══════════════════════════════════════════════════════╝
-"@ -ForegroundColor Cyan
-
-Write-Host "  Auth: opencode auth login" -ForegroundColor Yellow
-Write-Host "  Star: https://github.com/skeletorflet/opencode-supreme-setup" -ForegroundColor DarkGray
-Write-Host "  Log:  $LogFile" -ForegroundColor DarkGray
+Write-Host ""
+Write-Host "  ${YELLOW}${B}opencode auth login${R}  ${GRAY}← run this first${R}"
+Write-Host "  ${GRAY}log → $LogFile${R}"
+Write-Host "  ${GRAY}★   https://github.com/skeletorflet/opencode-supreme-setup${R}`n"

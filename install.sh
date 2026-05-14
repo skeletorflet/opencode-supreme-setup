@@ -1,282 +1,303 @@
 #!/usr/bin/env bash
 # OpenCode Supreme Setup v4.0
-set -e
+# shellcheck disable=SC2034,SC2059,SC2016
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$HOME/.config/opencode"
-CONFIG_URL="https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
+# ── Monokai Pastel Dark Palette (256-color ANSI) ───────────────────────────
+R='\033[0m';  B='\033[1m';  DIM='\033[2m'
+PURPLE='\033[38;5;141m'   # AB9DF2 – lavender
+PINK='\033[38;5;211m'     # FF6188 – rose
+GREEN='\033[38;5;114m'    # A9DC76 – sage
+YELLOW='\033[38;5;222m'   # FFD866 – honey
+CYAN='\033[38;5;117m'     # 78DCE8 – sky
+ORANGE='\033[38;5;215m'   # FC9867 – peach
+WHITE='\033[38;5;253m'    # F8F8F2 – soft white
+GRAY='\033[38;5;242m'     # 75715E – muted
+RED='\033[38;5;203m'      # FF5555 – pastel red
 
-# Colors & Styles
-G='\033[0;32m'; C='\033[0;36m'; Y='\033[1;33m'; R='\033[0;31m'; M='\033[1;35m'; D='\033[2m'; W='\033[1;37m'; NC='\033[0m'
-BOLD='\033[1m'; UNDERLINE='\033[4m'; CURSOR_OFF='\033[?25l'; CURSOR_ON='\033[?25h'; CLEAR_LINE='\033[2K\r'
+# ── Terminal ───────────────────────────────────────────────────────────────
+CLR='\033[2K\r'
+hide_cursor(){ printf '\033[?25l'; }
+show_cursor(){ printf '\033[?25h'; }
+trap 'show_cursor; echo' EXIT INT TERM
 
-# UI Helpers
-step()  { echo -e "\n${BOLD}${C}── $1 ──${NC}"; }
-ok()    { echo -e "${G}  ✓${NC} $1"; }
-warn()  { echo -e "${Y}  ⚠${NC} $1"; }
-info()  { echo -e "    ${D}$1${NC}"; }
-sec()   { echo -e "\n${M}═══ $1 ═══${NC}"; }
+# ── Logging ────────────────────────────────────────────────────────────────
+LOG="/tmp/oc_setup_$(date +%Y%m%d_%H%M%S).log"
+: > "$LOG"
 
-logo() {
+# ── State ──────────────────────────────────────────────────────────────────
+PHASE=0; TOTAL=10
+
+# ── Header ─────────────────────────────────────────────────────────────────
+_header(){
   clear
-  echo -e "${C}"
-  echo '  ╔══════════════════════════════════════════╗'
-  echo '  ║      ███████╗██╗   ██╗██████╗ ██████╗   ║'
-  echo '  ║      ██╔════╝██║   ██║██╔══██╗██╔══██╗  ║'
-  echo '  ║      ███████╗██║   ██║██████╔╝██████╔╝  ║'
-  echo '  ║      ╚════██║██║   ██║██╔═══╝ ██╔══██╗  ║'
-  echo '  ║      ███████║╚██████╔╝██║     ██║  ██║  ║'
-  echo '  ║      ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝  ║'
-  echo '  ║    SUPREME SETUP — v4.0                  ║'
-  echo '  ╚══════════════════════════════════════════╝'
-  echo -e "${NC}"
+  printf "${PURPLE}${B}"
+  printf "  ╭──────────────────────────────────────────────────────╮\n"
+  printf "  │  ✦  OpenCode Supreme Setup                   v4.0  │\n"
+  printf "  │     150+ skills · 13 plugins · SDD · caveman-v4     │\n"
+  printf "  ╰──────────────────────────────────────────────────────╯${R}\n"
 }
 
-# Logging Setup
-LOG_FILE="/tmp/opencode_setup_$(date +%Y%m%d_%H%M%S).log"
-touch "$LOG_FILE"
+# ── Progress bar ───────────────────────────────────────────────────────────
+_bar(){
+  local pct=$(( PHASE * 100 / TOTAL ))
+  local fill=$(( pct * 22 / 100 )); local empty=$(( 22 - fill ))
+  local bar=""
+  for ((i=0;i<fill;i++));  do bar+="█"; done
+  for ((i=0;i<empty;i++)); do bar+="░"; done
+  printf "${PURPLE}${bar}${R} ${GRAY}%3d%%${R}" "$pct"
+}
 
-# Live Progress Loader
-run() {
-  local name=$1; shift
-  local pid
-  local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-  
-  # Ensure the line is fresh
-  printf "${CLEAR_LINE}  ${C}⠋${NC} ${name} ..."
-  
-  # Run command in background, redirecting output to a temporary file
-  tmp_out=$(mktemp)
-  "$@" > "$tmp_out" 2>&1 &
-  pid=$!
-  
-  local i=0
-  while kill -0 $pid 2>/dev/null; do
-    printf "\r  ${C}${frames:i++%10:1}${NC} ${name} ..."
-    sleep 0.1
+# ── Section header ─────────────────────────────────────────────────────────
+section(){
+  (( PHASE++ )) || true
+  printf "\n${PURPLE}${B}  ╌╌  %-36s${R}${GRAY} [%02d/%02d]${R}  $(_bar)\n" \
+    "$1" "$PHASE" "$TOTAL"
+}
+
+# ── Spinner task runner ────────────────────────────────────────────────────
+SP='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+
+task(){
+  local label="$1"; shift
+  local w=38; local tmp; tmp=$(mktemp)
+  hide_cursor
+  printf "    ${CYAN}⠋${R}  %-${w}s" "$label"
+  "$@" >"$tmp" 2>&1 & local pid=$! i=0
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r    ${CYAN}${SP:$(( i % 10 )):1}${R}  %-${w}s" "$label"
+    sleep 0.07; (( i++ )) || true
   done
-  
-  wait $pid
-  local exit_code=$?
-  
-  cat "$tmp_out" >> "$LOG_FILE"
-  
-  if [ $exit_code -eq 0 ]; then
-    printf "${CLEAR_LINE}${G}  ✓${NC} ${name}\n"
-    rm -f "$tmp_out"
-    return 0
+  wait "$pid"; local rc=$?
+  cat "$tmp" >> "$LOG"; rm -f "$tmp"
+  if (( rc == 0 )); then
+    printf "\r    ${GREEN}✓${R}  ${WHITE}%-${w}s${R}\n" "$label"
   else
-    printf "${CLEAR_LINE}${R}  ✗${NC} ${name}\n"
-    echo -e "${D}      Error: $(tail -n 1 "$tmp_out")${NC}"
-    rm -f "$tmp_out"
-    return 1
+    printf "\r    ${RED}✗${R}  ${RED}%-${w}s${R}  ${GRAY}↳ %s${R}\n" "$label" "$LOG"
   fi
+  show_cursor; return $rc
+}
+task_s(){ task "$@" || true; }  # soft: never fails script
+
+# ── Smart prompt  [Y/n] → Enter = Y ───────────────────────────────────────
+ask(){
+  local q="$1" default="${2:-y}"
+  local hint
+  [[ "$default" == y ]] \
+    && hint="${GREEN}${B}Y${R}${GRAY}/n${R}" \
+    || hint="${GRAY}y/${R}${RED}${B}N${R}"
+  printf "\n    ${YELLOW}?${R}  ${WHITE}%-40s${R}  ${GRAY}[${R}%b${GRAY}]${R}  " "$q" "$hint"
+  local ans; IFS= read -r ans
+  [[ -z "$ans" ]] && ans="$default"
+  [[ "$ans" =~ ^[Yy] ]]
 }
 
-# ── MAIN ──
-echo -e "${CURSOR_OFF}"
-trap 'echo -e "${CURSOR_ON}"; exit' INT TERM EXIT
+# ── SETUP ──────────────────────────────────────────────────────────────────
+CONF="$HOME/.config/opencode"
+CONF_URL="https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
 
-logo
-echo -e "${W}  ${BOLD}Ultimate OpenCode Experience${NC}"
-echo -e "${D}  150+ skills · 13 plugins · SDD · self-healing · dashboard · caveman-v4${NC}"
+_header
+printf "  ${GRAY}log → %s${R}\n" "$LOG"
 
-# Step 0: Prerequisites
-step "Prerequisites"
-run "Node.js 18+" bash -c "command -v node && node --version | grep -q 'v1[89]\|v[2-9]'"
+# ─────────────────────────────────────────────────────── [1] Prerequisites ──
+section "Prerequisites"
+task_s "Node.js 18+" \
+  bash -c "command -v node && node --version | grep -qE 'v(1[89]|[2-9][0-9])'"
+task_s "bash 4+" \
+  bash -c "[[ \${BASH_VERSINFO[0]} -ge 4 ]]"
 
-# Step 1: OpenCode
-step "OpenCode"
-run "Check/install opencode" bash -c "
-  if command -v opencode &>/dev/null; then true
-  else curl -fsSL https://opencode.ai/install | bash &>/dev/null; command -v opencode; fi
-"
+# ─────────────────────────────────────────────────────── [2] Core tools ─────
+section "Core Tools"
+task "opencode-ai" \
+  bash -c "command -v opencode || npm install -g opencode-ai@latest"
+task "bun runtime" \
+  bash -c "command -v bun || { curl -fsSL https://bun.sh/install | bash && export PATH=\"\$HOME/.bun/bin:\$PATH\"; }"
 
-# Step 2: Bun
-step "Bun"
-run "Check/install bun" bash -c "
-  if command -v bun &>/dev/null; then true
-  else curl -fsSL https://bun.sh/install | bash &>/dev/null; export PATH=\"\$HOME/.bun/bin:\$PATH\"; command -v bun; fi
-"
+# ─────────────────────────────────────────────────── [3] Provider config ────
+section "Provider Subscriptions"
+printf "\n    ${GRAY}Select active subscriptions  (Enter = default shown)${R}\n"
+CLAUDE_F=no; OPENAI_F=no; GEMINI_F=no; COPILOT_F=no; OG_F=yes
 
-# Step 3: Provider flags
-step "Provider subscriptions"
-echo -e "${CURSOR_ON}"
-read -p "  ? Claude Pro/Max? (y/n/max20): " r
-case "$r" in y|yes) CLAUDE="--claude=yes" ;; max20) CLAUDE="--claude=max20" ;; *) CLAUDE="--claude=no" ;; esac
-read -p "  ? ChatGPT Plus? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OPENAI="--openai=yes" || OPENAI="--openai=no"
-read -p "  ? Gemini? (y/n): " r;     [[ "$r" =~ ^(y|yes)$ ]] && GEMINI="--gemini=yes" || GEMINI="--gemini=no"
-read -p "  ? Copilot? (y/n): " r;    [[ "$r" =~ ^(y|yes)$ ]] && COPILOT="--copilot=yes" || COPILOT="--copilot=no"
-read -p "  ? OpenCode Go? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OG="--opencode-go=yes" || OG="--opencode-go=no"
-FLAGS="$CLAUDE $OPENAI $GEMINI $COPILOT $OG"
-echo -e "${CURSOR_OFF}"
-info "Flags: $FLAGS"
+ask "Claude Pro / Max?" n && CLAUDE_F=yes || CLAUDE_F=no
+ask "ChatGPT Plus?"     n && OPENAI_F=yes || OPENAI_F=no
+ask "Gemini?"           n && GEMINI_F=yes || GEMINI_F=no
+ask "Copilot?"         n && COPILOT_F=yes || COPILOT_F=no
+ask "OpenCode Go?"      y && OG_F=yes     || OG_F=no
+FLAGS="--claude=$CLAUDE_F --openai=$OPENAI_F --gemini=$GEMINI_F --copilot=$COPILOT_F --opencode-go=$OG_F"
+printf "\n    ${GRAY}%s${R}\n" "$FLAGS"
 
-# Step 4: oh-my-openagent
-step "oh-my-openagent"
-run "Install plugin" bunx oh-my-openagent install --no-tui $FLAGS --skip-auth || \
-  run "Fallback install" bunx oh-my-openagent install --no-tui --claude=no --gemini=no --copilot=no --opencode-go=yes --skip-auth
+# ──────────────────────────────────────────────── [4] oh-my-openagent ───────
+section "oh-my-openagent"
+# shellcheck disable=SC2086
+task "install orchestrator" \
+  bash -c "bunx oh-my-openagent install --no-tui $FLAGS --skip-auth" || \
+task_s "install (fallback)" \
+  bash -c "bunx oh-my-openagent install --no-tui --claude=no --gemini=no --copilot=no --opencode-go=yes --skip-auth"
 
-# Step 5: Config files
-step "Configuration"
-run "Cleanup old configs" rm -f "$CONFIG_DIR/opencode.jsonc" "$CONFIG_DIR/opencode.jsonc.backup-"*
-mkdir -p "$CONFIG_DIR"
+# ─────────────────────────────────────────────────── [5] Config & skills ────
+section "Config + 53 Skills"
+task "cleanup legacy jsonc" \
+  bash -c "rm -f \"$CONF/opencode.jsonc\" \"$CONF/opencode.jsonc.backup-\"* && mkdir -p \"$CONF\""
 
-if [ -d "$REPO_DIR/config" ]; then
-  run "Sync local config" cp -r "$REPO_DIR/config/"* "$CONFIG_DIR/"
+if [[ -d "$REPO_DIR/config" ]]; then
+  task "sync local config" bash -c "cp -r \"$REPO_DIR/config/\"* \"$CONF/\""
 else
-  run "Download opencode.json" curl -fsSL "$CONFIG_URL/opencode.json" -o "$CONFIG_DIR/opencode.json"
-  run "Download oh-my-openagent.json" curl -fsSL "$CONFIG_URL/oh-my-openagent.json" -o "$CONFIG_DIR/oh-my-openagent.json"
-  run "Download AGENTS.md" curl -fsSL "$CONFIG_URL/AGENTS.md" -o "$CONFIG_DIR/AGENTS.md"
-  run "Install 53 skills" bash -c "
-    mkdir -p \"$CONFIG_DIR/skills\"
-    for s in \$(curl -fsSL \"$CONFIG_URL/skills.txt\"); do
-      mkdir -p \"$CONFIG_DIR/skills/\$s\" 2>/dev/null
-      curl -fsSL \"$CONFIG_URL/skills/\$s/SKILL.md\" -o \"$CONFIG_DIR/skills/\$s/SKILL.md\" 2>/dev/null
+  task "opencode.json"        bash -c "curl -fsSL \"$CONF_URL/opencode.json\" -o \"$CONF/opencode.json\""
+  task "oh-my-openagent.json" bash -c "curl -fsSL \"$CONF_URL/oh-my-openagent.json\" -o \"$CONF/oh-my-openagent.json\""
+  task "AGENTS.md"            bash -c "curl -fsSL \"$CONF_URL/AGENTS.md\" -o \"$CONF/AGENTS.md\""
+  task "53 built-in skills"   bash -c "
+    mkdir -p \"$CONF/skills\"
+    for s in \$(curl -fsSL \"$CONF_URL/skills.txt\"); do
+      mkdir -p \"$CONF/skills/\$s\"
+      curl -fsSL \"$CONF_URL/skills/\$s/SKILL.md\" -o \"$CONF/skills/\$s/SKILL.md\" 2>/dev/null || true
     done
   "
 fi
 
-# Register oh-my-openagent in opencode.json
-if [ -f "$CONFIG_DIR/opencode.json" ]; then
-  python3 -c "
-import json
-with open('$CONFIG_DIR/opencode.json') as f: c = json.load(f)
-if 'oh-my-openagent' not in c.get('plugin', []):
-  c.setdefault('plugin', []).insert(0, 'oh-my-openagent')
-  with open('$CONFIG_DIR/opencode.json', 'w') as f: json.dump(c, f, indent=2)
-" 2>/dev/null && ok "Plugin registered in config" || true
-fi
+# register oh-my-openagent in opencode.json
+[[ -f "$CONF/opencode.json" ]] && python3 -c "
+import json, os
+p = os.path.expanduser('~/.config/opencode/opencode.json')
+try:
+    with open(p) as f: c = json.load(f)
+    if 'oh-my-openagent' not in c.get('plugin', []):
+        c.setdefault('plugin', []).insert(0, 'oh-my-openagent')
+        with open(p, 'w') as f: json.dump(c, f, indent=2)
+except: pass
+" 2>/dev/null || true
 
-# Step 6: Model selection + platform config
-step "Model configuration"
-MODEL=""
-if [ -f "$CONFIG_DIR/oh-my-openagent.json" ]; then
-  echo -e "${CURSOR_ON}"
-  echo "    1) Keep oh-my-openagent defaults"
-  echo "    2) DeepSeek V4 Flash on ALL agents"
-  echo "    3) Custom model"
-  read -p "  ? Choose (1-3): " mc
+# ────────────────────────────────────────────── [6] Model configuration ─────
+section "Model Configuration"
+MODEL=""; OMO="$CONF/oh-my-openagent.json"
+if [[ -f "$OMO" ]]; then
+  printf "\n"
+  printf "    ${GRAY}1${R}  Keep defaults\n"
+  printf "    ${GRAY}2${R}  DeepSeek V4 Flash  ${GRAY}(recommended)${R}\n"
+  printf "    ${GRAY}3${R}  Custom model\n"
+  printf "\n    ${YELLOW}?${R}  ${WHITE}Choose${R}  ${GRAY}[${R}${GREEN}${B}1${R}${GRAY}/2/3]${R}  "
+  read -r mc; [[ -z "$mc" ]] && mc=1
   case "$mc" in
-    1) MODEL="" ;;
     2) MODEL="opencode-go/deepseek-v4-flash" ;;
-    3) read -p "  Enter full model: " MODEL ;;
-    *) MODEL="" ;;
+    3) printf "    ${WHITE}Model ID:${R} "; read -r MODEL ;;
   esac
-  echo -e "${CURSOR_OFF}"
-  [ -n "$MODEL" ] && info "Model: $MODEL" || info "Keeping default models"
-fi
+  [[ -n "$MODEL" ]] && printf "    ${GRAY}→ %s${R}\n" "$MODEL"
 
-step "Platform optimizations"
-if [ -f "$CONFIG_DIR/oh-my-openagent.json" ]; then
-  run "Check tmux compatibility" python3 -c "
+  task_s "tmux compatibility" bash -c "
+    python3 -c \"
 import json, shutil
-with open('$CONFIG_DIR/oh-my-openagent.json') as f: c = json.load(f)
-if not shutil.which('tmux'): c.get('tmux', {})['enabled'] = False
-with open('$CONFIG_DIR/oh-my-openagent.json', 'w') as f: json.dump(c, f, indent=2)
-"
-  if [ -n "$MODEL" ]; then
-    run "Apply model overrides" python3 -c "
+p = '$OMO'
+with open(p) as f: c=json.load(f)
+if not shutil.which('tmux'): c.setdefault('tmux',{})['enabled']=False
+with open(p,'w') as f: json.dump(c,f,indent=2)
+\"
+  "
+  if [[ -n "$MODEL" ]]; then
+    task_s "apply model overrides" bash -c "
+      python3 -c \"
 import json
-with open('$CONFIG_DIR/oh-my-openagent.json') as f: c = json.load(f)
-for k, v in c.get('agents', {}).items():
-  v['model'] = '$MODEL'; v.pop('fallback_models', None)
-for k, v in c.get('categories', {}).items():
-  v['model'] = '$MODEL'; v.pop('fallback_models', None)
-with open('$CONFIG_DIR/oh-my-openagent.json', 'w') as f: json.dump(c, f, indent=2)
-"
+p = '$OMO'
+with open(p) as f: c=json.load(f)
+merged = {**c.get('agents',{}), **c.get('categories',{})}
+for k in merged:
+    for sect in ('agents','categories'):
+        if k in c.get(sect,{}):
+            c[sect][k]['model'] = '$MODEL'
+            c[sect][k].pop('fallback_models', None)
+with open(p,'w') as f: json.dump(c,f,indent=2)
+\"
+    "
   fi
 fi
 
-# Step 7: Dev tools
-step "Developer tools"
-run "Comment checker" npm install -g @code-yeongyu/comment-checker
-run "AST-grep" npm install -g @ast-grep/cli
-run "GitHub CLI" bash -c "
-  if command -v gh &>/dev/null; then true
-  elif command -v brew &>/dev/null; then brew install gh 2>/dev/null
-  elif command -v apt &>/dev/null; then sudo apt install -y gh 2>/dev/null; else false; fi
-"
+# ─────────────────────────────────────────────────── [7] Developer tools ────
+section "Developer Tools"
+task_s "comment-checker" npm install -g @code-yeongyu/comment-checker
+task_s "ast-grep"        npm install -g @ast-grep/cli
+task_s "GitHub CLI"      bash -c "
+  command -v gh && true ||
+  { command -v brew && brew install gh; } ||
+  { command -v apt  && sudo apt install -y gh 2>/dev/null; } || true"
 
-# Step 8: Essential plugins
-step "Supreme Plugins (10 total)"
-for plugin in \
-  "opencode-snippets|#snippet expansion" \
-  "opencode-snip|Snip (-60-90% tokens)" \
-  "opencode-notify|OS notifications" \
-  "opencode-mem|Persistent memory" \
-  "opencode-quota|Token tracking" \
-  "opencode-background-agents|Async agents" \
-  "opencode-worktree|Git worktrees" \
-  "opencode-dynamic-context-pruning|Context pruning" \
-  "opencode-smart-title|Smart titles" \
-  "ocwatch|Visual dashboard"; do
-  pkg="${plugin%%|*}"; desc="${plugin##*|}"
-  run "$desc" npm install -g $pkg
+# ────────────────────────────────────────────── [8] Plugins  (10 total) ─────
+section "Plugins  (10)"
+PKGS=(
+  "opencode-snippets|#snippet text expansion"
+  "opencode-snip|snip  60–90% token savings"
+  "opencode-notify|OS notifications"
+  "opencode-mem|persistent vector memory"
+  "opencode-quota|token + cost tracking"
+  "opencode-background-agents|async agent delegation"
+  "opencode-worktree|isolated git worktrees"
+  "opencode-dynamic-context-pruning|auto context pruning"
+  "opencode-smart-title|smart session titles"
+  "ocwatch|visual dashboard  :3000"
+)
+for entry in "${PKGS[@]}"; do
+  pkg="${entry%%|*}"; label="${entry##*|}"
+  task_s "$label" npm install -g "$pkg"
 done
 
-# Step 9: OpenSkills
-step "OpenSkills (100+ marketplace skills)"
-run "Install anthropics/skills" npx openskills install anthropics/skills -y
-run "Install openskills CLI" npm install -g openskills
-run "Sync to AGENTS.md" npx openskills sync -y -o "$CONFIG_DIR/AGENTS.md"
+[[ -f "$CONF/opencode.json" ]] && python3 -c "
+import json, os
+p = os.path.expanduser('~/.config/opencode/opencode.json')
+pkgs = ['opencode-snippets','opencode-snip','opencode-notify','opencode-mem',
+        'opencode-quota','opencode-background-agents','opencode-worktree',
+        'opencode-dynamic-context-pruning','opencode-smart-title','ocwatch']
+try:
+    with open(p) as f: c = json.load(f)
+    existing = set(c.get('plugin', []))
+    for pkg in pkgs:
+        if pkg not in existing: c.setdefault('plugin',[]).append(pkg)
+    with open(p,'w') as f: json.dump(c, f, indent=2)
+except: pass
+" 2>/dev/null || true
 
-# Step 10: Optional agentsys
-echo -e "${CURSOR_ON}"
-if ( read -p "  ? Install agentsys (49 agents)? (y/n): "; [[ "$REPLY" =~ ^(y|yes)$ ]] ); then
-  echo -e "${CURSOR_OFF}"
-  run "agentsys" npm install -g agentsys
+# ──────────────────────────────────────── [9] OpenSkills  (100+ skills) ─────
+section "OpenSkills  (100+)"
+task_s "anthropics/skills"  npx openskills install anthropics/skills -y
+task_s "openskills CLI"     npm install -g openskills
+task_s "sync to AGENTS.md"  bash -c "npx openskills sync -y -o \"$CONF/AGENTS.md\""
+
+# ──────────────────────────────────────────────── [10] Optional extras ───────
+section "Optional Extras"
+if ask "agentsys  (49 agents, 20 plugins)"; then
+  task_s "agentsys" npm install -g agentsys
 fi
-
-# Step 11: Optional extras
-step "Optional extras"
-echo -e "${CURSOR_ON}"
-if ( read -p "  ? Install supermemory? (y/n): "; [[ "$REPLY" =~ ^(y|yes)$ ]] ); then
-  echo -e "${CURSOR_OFF}"
-  run "Supermemory" bunx opencode-supermemory@latest install --no-tui
+if ask "supermemory"; then
+  task_s "supermemory" bash -c "bunx opencode-supermemory@latest install --no-tui"
 fi
-
-echo -e "${CURSOR_ON}"
-if ( read -p "  ? Install firecrawl? (y/n): "; [[ "$REPLY" =~ ^(y|yes)$ ]] ); then
-  echo -e "${CURSOR_OFF}"
-  run "Firecrawl" bash -c "npm install -g firecrawl-cli 2>/dev/null || npm install -g @firecrawl/firecrawl-cli 2>/dev/null"
+if ask "firecrawl"; then
+  task_s "firecrawl" bash -c \
+    "npm install -g firecrawl-cli 2>/dev/null || npm install -g @firecrawl/firecrawl-cli"
 fi
-
-echo -e "${CURSOR_ON}"
-if ( read -p "  ? Install WakaTime? (y/n): "; [[ "$REPLY" =~ ^(y|yes)$ ]] ); then
-  echo -e "${CURSOR_OFF}"
-  run "WakaTime" npm install -g opencode-wakatime
+if ask "WakaTime"; then
+  task_s "wakatime" npm install -g opencode-wakatime
 fi
-
-echo -e "${CURSOR_ON}"
-if ( read -p "  ? Install themes? (y/n): "; [[ "$REPLY" =~ ^(y|yes)$ ]] ); then
-  echo -e "${CURSOR_OFF}"
+if ask "Themes  (ayu · lavi · moonlight · poimandres)"; then
   for t in opencode-ayu-theme lavi opencode-moonlight-theme opencode-ai-poimandres-theme; do
-    run "Theme: $t" npm install -g "$t"
+    task_s "$t" npm install -g "$t"
   done
 fi
-echo -e "${CURSOR_OFF}"
 
-# Step 12: Verify
-step "Verification"
-run "oh-my-openagent doctor" bunx oh-my-openagent doctor
+# ── Verify ─────────────────────────────────────────────────────────────────
+printf "\n    ${DIM}verifying…${R}\n"
+task_s "oh-my-openagent doctor" bunx oh-my-openagent doctor
 
-# Step 13: Summary
-sec "Setup Complete!"
-echo -e "${BOLD}${C}"
-echo '  ╔══════════════════════════════════════════════════════╗'
-echo '  ║  🚀  opencode                  launch                ║'
-echo '  ║  📊  ocwatch                  visual dashboard       ║'
-echo '  ║  🔥  ulw <task>               ultrawork mode         ║'
-echo '  ║  🛡  @spec-architect          SDD planning           ║'
-echo '  ║  🩹  @self-healer            auto debugging         ║'
-echo '  ║  🔧  @refactor               clean code             ║'
-echo '  ║  🎯  150+ skills              auto-triggered         ║'
-echo '  ║  🧠  Persistent memory        cross-session context  ║'
-echo '  ║  ✂️  snip                     -60-90% token savings  ║'
-echo '  ╚══════════════════════════════════════════════════════╝'
-echo -e "${NC}"
-echo -e "  ${BOLD}${Y}Auth: opencode auth login${NC}"
-echo -e "  ${D}Star: https://github.com/skeletorflet/opencode-supreme-setup${NC}"
-echo -e "  ${D}Log:  $LOG_FILE${NC}"
-echo -e "${CURSOR_ON}"
+# ── Summary ────────────────────────────────────────────────────────────────
+printf "\n"
+printf "${GREEN}${B}"
+printf "  ╭──────────────────────────────────────────────────────╮\n"
+printf "  │  ✦  Setup Complete!                                  │\n"
+printf "  ╰──────────────────────────────────────────────────────╯${R}\n"
+printf "\n"
+printf "  ${CYAN}%-22s${R}${GRAY}→${R}  %s\n" \
+  "opencode"         "launch" \
+  "ocwatch"          "visual dashboard  :3000" \
+  "ulw <task>"       "ultrawork (parallel agents)" \
+  "@spec-architect"  "spec-driven development" \
+  "@self-healer"     "autonomous debugging" \
+  "@refactor"        "clean code"
+printf "\n"
+printf "  ${YELLOW}${B}opencode auth login${R}  ${GRAY}← run this first${R}\n"
+printf "  ${GRAY}log → %s${R}\n" "$LOG"
+printf "  ${GRAY}★   https://github.com/skeletorflet/opencode-supreme-setup${R}\n\n"
