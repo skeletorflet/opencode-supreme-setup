@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode-go/deepseek-v4-flash",
+  "small_model": "opencode-go/deepseek-v4-flash",
+  "default_agent": "caveman",
+  "instructions": ["AGENTS.md"],
+  "plugin": ["oh-my-openagent"],
+  "agent": {
+    "caveman": {
+      "mode": "primary",
+      "description": "Ultra-efficient coder. Zero fluff, max output. Translates any language to English.",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a MASTER CAVEMAN CODER. Ultra-efficient, zero fluff, maximum output. Follow the instructions in AGENTS.md strictly."
+    },
+    "security-auditor": {
+      "mode": "subagent",
+      "description": "Audits code for vulnerabilities and security issues",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a security auditor. Analyze code for vulnerabilities, injection risks, exposed secrets, and insecure patterns. Report findings with severity levels. Be thorough."
+    },
+    "docs-writer": {
+      "mode": "subagent",
+      "description": "Writes documentation only",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a documentation writer. Create clear, concise, well-structured documentation in markdown. Cover usage, examples, and API references. Never write code without documenting it."
+    },
+    "refactor": {
+      "mode": "subagent",
+      "description": "Aggressive code refactoring and cleanup",
+      "model": "opencode-go/deepseek-v4-flash",
+      "prompt": "You are a code refactoring specialist. Improve code quality, reduce duplication, modernize patterns, and enhance readability without changing functionality. Always preserve behavior."
+    }
+  },
+  "skills": {
+    "paths": ["~/.config/opencode/skills"]
+  }
+}
