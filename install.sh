@@ -106,19 +106,46 @@ if 'oh-my-openagent' not in c.get('plugin', []):
 " 2>/dev/null && ok "Plugin registered" || true
 fi
 
-# Step 6: Platform config
+# Step 6: Model selection + platform config
+step "Model configuration"
+MODEL=""
+if [ -f "$CONFIG_DIR/oh-my-openagent.json" ]; then
+  echo "    1) Keep oh-my-openagent default models (recommended)"
+  echo "    2) DeepSeek V4 Flash on ALL agents"
+  echo "    3) DeepSeek V4 on ALL agents"
+  echo "    4) DeepSeek R1 on ALL agents"
+  echo "    5) Custom model"
+  read -p "  ? Choose (1-5): " mc
+  case "$mc" in
+    1) MODEL="" ;;
+    2) MODEL="opencode-go/deepseek-v4-flash" ;;
+    3) MODEL="opencode-go/deepseek-v4" ;;
+    4) MODEL="opencode-go/deepseek-r1" ;;
+    5) read -p "  Enter full model: " MODEL ;;
+    *) MODEL="" ;;
+  esac
+  [ -n "$MODEL" ] && info "Model: $MODEL" || info "Keeping default models"
+fi
+
 step "Platform optimizations"
 if [ -f "$CONFIG_DIR/oh-my-openagent.json" ]; then
-  run "Optimize" python3 -c "
+  run "Disable tmux if unavailable" python3 -c "
 import json, shutil
 with open('$CONFIG_DIR/oh-my-openagent.json') as f: c = json.load(f)
 if not shutil.which('tmux'): c.get('tmux', {})['enabled'] = False
-for k, v in c.get('agents', {}).items():
-  v['model'] = 'opencode-go/deepseek-v4-flash'; v.pop('fallback_models', None)
-for k, v in c.get('categories', {}).items():
-  v['model'] = 'opencode-go/deepseek-v4-flash'; v.pop('fallback_models', None)
 with open('$CONFIG_DIR/oh-my-openagent.json', 'w') as f: json.dump(c, f, indent=2)
 "
+  if [ -n "$MODEL" ]; then
+    run "Set all agents to $MODEL" python3 -c "
+import json
+with open('$CONFIG_DIR/oh-my-openagent.json') as f: c = json.load(f)
+for k, v in c.get('agents', {}).items():
+  v['model'] = '$MODEL'; v.pop('fallback_models', None)
+for k, v in c.get('categories', {}).items():
+  v['model'] = '$MODEL'; v.pop('fallback_models', None)
+with open('$CONFIG_DIR/oh-my-openagent.json', 'w') as f: json.dump(c, f, indent=2)
+"
+  fi
 fi
 
 # Step 7: Dev tools

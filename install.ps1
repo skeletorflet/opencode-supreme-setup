@@ -126,16 +126,42 @@ if (Test-Path $ocConfig) {
   if (-not ($oc.plugin -contains "oh-my-openagent")) { $oc.plugin = @("oh-my-openagent") + $oc.plugin; $oc | ConvertTo-Json -Depth 10 | Set-Content $ocConfig -Encoding UTF8; Write-OK "Plugin registered" }
 }
 
-# ── Step 6: Platform config ─────────────────────────────────────────────────
-Write-Step "Platform optimizations"
+# ── Step 6: Model selection + platform config ──────────────────────────────
+Write-Step "Model configuration"
 $omoConfig = "$ConfigDir\oh-my-openagent.json"
+
+$modelId = "opencode-go/deepseek-v4-flash"
+if (-not $NonInteractive -and (Test-Path $omoConfig)) {
+  Write-Host "    1) Keep oh-my-openagent default models (recommended)" -ForegroundColor White
+  Write-Host "    2) DeepSeek V4 Flash on ALL agents (current default)" -ForegroundColor White
+  Write-Host "    3) DeepSeek V4 on ALL agents" -ForegroundColor White
+  Write-Host "    4) DeepSeek R1 on ALL agents" -ForegroundColor White
+  Write-Host "    5) Custom model (type any opencode-go/model)" -ForegroundColor White
+  $choice = Read-Host "  ? Choose model config (1-5)"
+  switch ($choice) {
+    "1" { $modelId = $null; Write-Info "Keeping default models" }
+    "2" { $modelId = "opencode-go/deepseek-v4-flash" }
+    "3" { $modelId = "opencode-go/deepseek-v4" }
+    "4" { $modelId = "opencode-go/deepseek-r1" }
+    "5" { $modelId = Read-Host "  Enter full model name (e.g. opencode-go/deepseek-v4-flash)" }
+    default { $modelId = $null; Write-Info "Keeping default models" }
+  }
+}
+
+Write-Step "Platform optimizations"
 if (Test-Path $omoConfig) {
-  Invoke-Progress -N "Optimize oh-my-openagent.json" -B {
+  Invoke-Progress -N "Disable tmux on Windows" -B {
     $omo = Get-Content $omoConfig -Raw | ConvertFrom-Json
     if ($IsWin) { $omo.tmux.enabled = $false }
-    foreach ($a in $omo.agents.PSObject.Properties) { $a.Value.model = "opencode-go/deepseek-v4-flash"; $a.Value.PSObject.Properties.Remove("fallback_models") }
-    foreach ($c in $omo.categories.PSObject.Properties) { $c.Value.model = "opencode-go/deepseek-v4-flash"; $c.Value.PSObject.Properties.Remove("fallback_models") }
     $omo | ConvertTo-Json -Depth 10 | Set-Content $omoConfig -Encoding UTF8; $true
+  }
+  if ($modelId) {
+    Invoke-Progress -N "Set all agents to $modelId" -B {
+      $omo = Get-Content $omoConfig -Raw | ConvertFrom-Json
+      foreach ($a in $omo.agents.PSObject.Properties) { $a.Value.model = $modelId; $a.Value.PSObject.Properties.Remove("fallback_models") }
+      foreach ($c in $omo.categories.PSObject.Properties) { $c.Value.model = $modelId; $c.Value.PSObject.Properties.Remove("fallback_models") }
+      $omo | ConvertTo-Json -Depth 10 | Set-Content $omoConfig -Encoding UTF8; $true
+    }
   }
 }
 
