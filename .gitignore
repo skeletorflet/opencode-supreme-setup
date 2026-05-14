@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Secret/credentials
+*.env
+.env.*
+credentials.json
+*.key
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*

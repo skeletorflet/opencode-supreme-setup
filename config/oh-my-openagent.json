@@ -1,0 +1,127 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "sisyphus": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "oracle": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "librarian": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "explore": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "multimodal-looker": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "prometheus": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "metis": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "momus": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "atlas": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "sisyphus-junior": {
+      "model": "opencode-go/deepseek-v4-flash"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "ultrabrain": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "deep": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "artistry": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "quick": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "unspecified-low": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "unspecified-high": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "writing": {
+      "model": "opencode-go/deepseek-v4-flash"
+    }
+  },
+  "google_auth": false,
+  "team_mode": {
+    "enabled": true,
+    "max_parallel_members": 8,
+    "tmux_visualization": true
+  },
+  "agent_order": ["sisyphus", "hephaestus", "prometheus", "atlas"],
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical",
+    "main_pane_size": 60,
+    "main_pane_min_width": 120,
+    "agent_pane_min_width": 40
+  },
+  "hashline_edit": true,
+  "runtime_fallback": {
+    "enabled": true,
+    "retry_on_errors": [
+      400,
+      429,
+      503,
+      529
+    ],
+    "max_fallback_attempts": 3,
+    "cooldown_seconds": 30,
+    "timeout_seconds": 30,
+    "notify_on_fallback": true
+  },
+  "background_task": {
+    "defaultConcurrency": 8,
+    "staleTimeoutMs": 180000,
+    "providerConcurrency": {
+      "opencode-go": 5,
+      "anthropic": 3,
+      "google": 5
+    },
+    "modelConcurrency": {
+      "opencode-go/deepseek-v4-flash": 5
+    }
+  },
+  "experimental": {
+    "aggressive_truncation": true,
+    "auto_resume": true,
+    "task_system": true,
+    "dynamic_context_pruning": {
+      "enabled": true,
+      "notification": "minimal",
+      "turn_protection": {
+        "enabled": true,
+        "turns": 3
+      },
+      "strategies": {
+        "deduplication": {
+          "enabled": true
+        },
+        "supersede_writes": {
+          "enabled": true,
+          "aggressive": false
+        },
+        "purge_errors": {
+          "enabled": true,
+          "turns": 5
+        }
+      }
+    }
+  }
+}
