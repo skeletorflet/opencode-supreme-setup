@@ -1,177 +1,187 @@
 #!/usr/bin/env bash
-# OpenCode Supreme Setup - Linux/macOS Bash Installer
+# OpenCode Supreme Setup v2.0
 set -e
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="$HOME/.config/opencode"
 CONFIG_URL="https://raw.githubusercontent.com/skeletorflet/opencode-supreme-setup/master/config"
 
-GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'; WHITE='\033[1;37m'; NC='\033[0m'
-step()  { echo -e "\n${CYAN}[STEP]${NC} $1"; }
-ok()    { echo -e "  ${GREEN}[OK]${NC} $1"; }
-warn()  { echo -e "  ${YELLOW}[!]${NC} $1"; }
-info()  { echo -e "  [i] $1"; }
-yn()    { read -p "$1 (y/n): " r; [ "$r" = "y" ] || [ "$r" = "yes" ]; }
+# ── UI ──
+G='\033[0;32m'; C='\033[0;36m'; Y='\033[1;33m'; R='\033[0;31m'; M='\033[1;35m'; D='\033[2m'; W='\033[1;37m'; NC='\033[0m'
 
-clear
-echo -e "${CYAN}======================================"
-echo -e "  OpenCode Supreme Setup"
-echo -e "  oh-my-openagent + Caveman + DeepSeek"
-echo -e "======================================${NC}"
+step()  { echo -e "\n${C}  ── $1 ──${NC}"; }
+ok()    { echo -e "  ${G}✓${NC} $1"; }
+warn()  { echo -e "  ${Y}⚠${NC} $1"; }
+info()  { echo -e "    ${D}$1${NC}"; }
+sec()   { echo -e "\n  ${M}═══ $1 ═══${NC}"; }
+yn()    { read -p "  ? $1 (y/n): " r; [ "$r" = "y" ] || [ "$r" = "yes" ]; }
+sp()    { printf "  ${D}→${NC} $1 ... "; }
 
-# Step 0: Check Node.js
-step "Checking Node.js..."
-if command -v node &>/dev/null; then
-  ok "Node.js $(node --version)"
-else
-  warn "Node.js not found. Install 18+ LTS from https://nodejs.org"
-  exit 1
-fi
-
-# Step 1: Install OpenCode
-step "Checking OpenCode..."
-if command -v opencode &>/dev/null; then
-  ok "OpenCode $(opencode --version)"
-else
-  warn "Installing OpenCode..."
-  curl -fsSL https://opencode.ai/install | bash
-  command -v opencode &>/dev/null && ok "OpenCode installed" || warn "Install failed: https://opencode.ai/docs"
-fi
-
-# Step 2: Install Bun
-step "Checking Bun..."
-if command -v bun &>/dev/null; then
-  ok "Bun $(bun --version)"
-else
-  warn "Installing Bun..."
-  curl -fsSL https://bun.sh/install | bash
-  export PATH="$HOME/.bun/bin:$PATH"
-  command -v bun &>/dev/null && ok "Bun installed" || warn "Bun install failed"
-fi
-
-# Step 3: Subscription questions
-step "Subscription configuration"
-read -p "Do you have Claude Pro/Max? (y/n/max20): " r
-case "$r" in y|yes) CLAUDE="--claude=yes" ;; max20) CLAUDE="--claude=max20" ;; *) CLAUDE="--claude=no" ;; esac
-read -p "ChatGPT Plus? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OPENAI="--openai=yes" || OPENAI="--openai=no"
-read -p "Integrate Gemini? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && GEMINI="--gemini=yes" || GEMINI="--gemini=no"
-read -p "GitHub Copilot? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && COPILOT="--copilot=yes" || COPILOT="--copilot=no"
-read -p "OpenCode Go (\$10/mo)? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OPENCODE_GO="--opencode-go=yes" || OPENCODE_GO="--opencode-go=no"
-info "Flags: $CLAUDE $OPENAI $GEMINI $COPILOT $OPENCODE_GO"
-
-# Step 4: Install oh-my-openagent
-step "Installing oh-my-openagent..."
-bunx oh-my-openagent install --no-tui $CLAUDE $OPENAI $GEMINI $COPILOT $OPENCODE_GO --skip-auth 2>&1 || {
-  warn "First attempt failed, retrying fallback..."
-  bunx oh-my-openagent install --no-tui --claude=no --openai=no --gemini=no --copilot=no --opencode-go=yes --skip-auth 2>&1
+logo() {
+  clear
+  echo -e "${C}"
+  echo '  ╔══════════════════════════════════════════╗'
+  echo '  ║      ███████╗██╗   ██╗██████╗ ██████╗   ║'
+  echo '  ║      ██╔════╝██║   ██║██╔══██╗██╔══██╗  ║'
+  echo '  ║      ███████╗██║   ██║██████╔╝██████╔╝  ║'
+  echo '  ║      ╚════██║██║   ██║██╔═══╝ ██╔══██╗  ║'
+  echo '  ║      ███████║╚██████╔╝██║     ██║  ██║  ║'
+  echo '  ║      ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝  ║'
+  echo '  ║    SUPREME SETUP — v2.0                  ║'
+  echo '  ╚══════════════════════════════════════════╝'
+  echo -e "${NC}"
 }
-ok "oh-my-openagent installed"
 
-# Step 5: Register plugin in opencode.json
-step "Registering plugin..."
-OC_CONFIG="$CONFIG_DIR/opencode.json"
-if [ -f "$OC_CONFIG" ]; then
-  if ! grep -q '"oh-my-openagent"' "$OC_CONFIG" 2>/dev/null; then
-    python3 -c "
-import json
-with open('$OC_CONFIG') as f: c = json.load(f)
-if 'oh-my-openagent' not in c.get('plugin', []):
-  c.setdefault('plugin', []).append('oh-my-openagent')
-with open('$OC_CONFIG', 'w') as f: json.dump(c, f, indent=2)
-" 2>/dev/null && ok "Plugin registered" || warn "Could not auto-register plugin"
+run() {
+  local name=$1; shift
+  printf "  ${D}→${NC} $name ... "
+  if "$@" &>/dev/null; then
+    echo -e "${G}✓${NC}"
   else
-    ok "Already registered"
+    echo -e "${R}✗${NC}"
   fi
-fi
+}
 
-# Step 6: Copy config files
-step "Copying configuration files..."
-mkdir -p "$CONFIG_DIR"
-if [ -d "$REPO_DIR/config" ]; then
-  cp -r "$REPO_DIR/config/"* "$CONFIG_DIR/"
-  ok "Config files copied from local repo"
+# ── MAIN ──
+logo
+echo -e "${W}  One-command setup for the ultimate OpenCode experience${NC}"
+echo -e "${D}  oh-my-openagent · 50+ skills · caveman mode · deepseek-v4-flash${NC}"
+
+# Step 0: Prerequisites
+step "Prerequisites"
+run "Node.js"   bash -c "command -v node && info \$(node --version)"
+run "Bash 4+"   bash -c "((BASH_VERSINFO >= 4))"
+
+# Step 1: OpenCode
+step "OpenCode"
+sp "Check/install"
+if command -v opencode &>/dev/null; then
+  ok "$(opencode --version)"
 else
-  info "Downloading config files from GitHub..."
-  for f in opencode.json oh-my-openagent.json AGENTS.md; do
-    curl -fsSL "$CONFIG_URL/$f" -o "$CONFIG_DIR/$f" && ok "Downloaded $f" || warn "Failed $f"
-  done
-  info "Downloading skills..."
-  SKILLS=$(curl -fsSL "$CONFIG_URL/skills.txt" 2>/dev/null || echo "")
-  for s in $SKILLS; do
-    mkdir -p "$CONFIG_DIR/skills/$s"
-    curl -fsSL "$CONFIG_URL/skills/$s/SKILL.md" -o "$CONFIG_DIR/skills/$s/SKILL.md" 2>/dev/null && ok "  skill: $s"
-  done
+  curl -fsSL https://opencode.ai/install | bash &>/dev/null && ok "Installed" || warn "Install failed"
 fi
 
-# Step 7: Fix oh-my-openagent.json
-step "Optimizing config..."
-OMO_CONFIG="$CONFIG_DIR/oh-my-openagent.json"
-if [ -f "$OMO_CONFIG" ]; then
+# Step 2: Bun
+step "Bun"
+sp "Check/install"
+if command -v bun &>/dev/null; then
+  ok "$(bun --version)"
+else
+  curl -fsSL https://bun.sh/install | bash &>/dev/null
+  export PATH="$HOME/.bun/bin:$PATH"
+  command -v bun &>/dev/null && ok "Installed" || warn "Install failed"
+fi
+
+# Step 3: Subscription flags
+step "Provider subscriptions"
+read -p "  ? Claude Pro/Max? (y/n/max20): " r
+case "$r" in y|yes) CLAUDE="--claude=yes" ;; max20) CLAUDE="--claude=max20" ;; *) CLAUDE="--claude=no" ;; esac
+read -p "  ? ChatGPT Plus? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OPENAI="--openai=yes" || OPENAI="--openai=no"
+read -p "  ? Gemini? (y/n): " r;     [[ "$r" =~ ^(y|yes)$ ]] && GEMINI="--gemini=yes" || GEMINI="--gemini=no"
+read -p "  ? Copilot? (y/n): " r;    [[ "$r" =~ ^(y|yes)$ ]] && COPILOT="--copilot=yes" || COPILOT="--copilot=no"
+read -p "  ? OpenCode Go? (y/n): " r; [[ "$r" =~ ^(y|yes)$ ]] && OG="--opencode-go=yes" || OG="--opencode-go=no"
+FLAGS="$CLAUDE $OPENAI $GEMINI $COPILOT $OG"
+info "Flags: $FLAGS"
+
+# Step 4: oh-my-openagent
+step "oh-my-openagent"
+run "Install plugin" bunx oh-my-openagent install --no-tui $FLAGS --skip-auth 2>&1 || \
+  run "Fallback install" bunx oh-my-openagent install --no-tui --claude=no --openai=no --gemini=no --copilot=no --opencode-go=yes --skip-auth 2>&1
+
+# Step 5: Config files
+step "Configuration"
+mkdir -p "$CONFIG_DIR"
+
+if [ -d "$REPO_DIR/config" ]; then
+  run "Copy config" cp -r "$REPO_DIR/config/"* "$CONFIG_DIR/"
+else
+  run "opencode.json"     curl -fsSL "$CONFIG_URL/opencode.json" -o "$CONFIG_DIR/opencode.json"
+  run "oh-my-openagent.json" curl -fsSL "$CONFIG_URL/oh-my-openagent.json" -o "$CONFIG_DIR/oh-my-openagent.json"
+  run "AGENTS.md"         curl -fsSL "$CONFIG_URL/AGENTS.md" -o "$CONFIG_DIR/AGENTS.md"
+  run "Download skills"   bash -c "
+    mkdir -p \"$CONFIG_DIR/skills\"
+    for s in \$(curl -fsSL \"$CONFIG_URL/skills.txt\"); do
+      mkdir -p \"$CONFIG_DIR/skills/\$s\"
+      curl -fsSL \"$CONFIG_URL/skills/\$s/SKILL.md\" -o \"$CONFIG_DIR/skills/\$s/SKILL.md\" 2>/dev/null
+    done
+  "
+fi
+
+# Register plugin
+OC="$CONFIG_DIR/opencode.json"
+if [ -f "$OC" ]; then
   python3 -c "
-import json, sys, platform
-with open('$OMO_CONFIG') as f: c = json.load(f)
-# Disable tmux on non-macOS/Linux or if tmux not found
-if platform.system() == 'Windows' or not __import__('shutil').which('tmux'):
-  c.get('tmux', {})['enabled'] = False
-# Deepset model on all agents and categories
+import json
+with open('$OC') as f: c = json.load(f)
+if 'oh-my-openagent' not in c.get('plugin', []):
+  c.setdefault('plugin', []).insert(0, 'oh-my-openagent')
+  with open('$OC', 'w') as f: json.dump(c, f, indent=2)
+  print('registered')
+" 2>/dev/null && ok "Plugin registered" || true
+fi
+
+# Step 6: Platform optimizations
+step "Platform optimizations"
+OMO="$CONFIG_DIR/oh-my-openagent.json"
+if [ -f "$OMO" ]; then
+  run "Optimize config" python3 -c "
+import json, sys, shutil
+with open('$OMO') as f: c = json.load(f)
+if not shutil.which('tmux'): c.get('tmux', {})['enabled'] = False
 for k, v in c.get('agents', {}).items():
   v['model'] = 'opencode-go/deepseek-v4-flash'
   v.pop('fallback_models', None)
 for k, v in c.get('categories', {}).items():
   v['model'] = 'opencode-go/deepseek-v4-flash'
   v.pop('fallback_models', None)
-with open('$OMO_CONFIG', 'w') as f: json.dump(c, f, indent=2)
-" 2>/dev/null && ok "Config optimized" || warn "Config optimization skipped"
+with open('$OMO', 'w') as f: json.dump(c, f, indent=2)
+"
 fi
 
-# Step 8: Install comment-checker
-step "Installing comment-checker..."
-bunx @code-yeongyu/comment-checker --version 2>/dev/null && ok "Comment checker available" || {
-  npm install -g @code-yeongyu/comment-checker 2>/dev/null && ok "Comment checker installed" || warn "Comment checker skipped"
-}
+# Step 7: Developer tools
+step "Developer tools"
+run "Comment checker" bash -c "npm install -g @code-yeongyu/comment-checker 2>/dev/null"
 
-# Step 9: Install GitHub CLI
-step "Checking GitHub CLI..."
-if command -v gh &>/dev/null; then
-  ok "gh $(gh --version | head -1)"
-elif command -v brew &>/dev/null; then
-  brew install gh 2>/dev/null && ok "gh installed via brew" || warn "gh install failed"
-elif command -v apt &>/dev/null; then
-  sudo apt install -y gh 2>/dev/null && ok "gh installed" || warn "gh install failed"
-else
-  warn "Install gh manually: https://cli.github.com/"
-fi
+run "GitHub CLI" bash -c "
+  if command -v gh &>/dev/null; then true
+  elif command -v brew &>/dev/null; then brew install gh 2>/dev/null
+  elif command -v apt &>/dev/null; then sudo apt install -y gh 2>/dev/null
+  else false; fi
+"
 
-# Step 10: Optional plugins
-step "Optional plugins"
-yn "Install opencode-supermemory (persistent memory)?" && {
-  bunx opencode-supermemory@latest install --no-tui 2>&1 && ok "Supermemory installed" || warn "Supermemory failed"
-}
-yn "Install firecrawl (web scraping)?" && {
-  npm install -g firecrawl-cli 2>&1 && ok "Firecrawl installed" || {
-    npm install -g @firecrawl/firecrawl-cli 2>&1 && ok "Firecrawl installed (@firecrawl)" || warn "Firecrawl failed"
-  }
-}
+# Step 8: Plugins
+step "Essential plugins"
+run "opencode-snippets" npm install -g opencode-snippets 2>/dev/null
+run "opencode-notify"   npm install -g opencode-notify 2>/dev/null
 
-# Step 11: Verify
-step "Verifying setup..."
-bunx oh-my-openagent doctor 2>&1 || true
+yn "Install agentsys (20 plugins, 49 agents, 41 skills)?" && \
+  run "agentsys" npm install -g agentsys 2>/dev/null
 
-# Step 12: Auth guidance
-step "Authentication"
-echo -e "\n${YELLOW}Authenticate your providers when ready:${NC}\n"
-[ "$OPENCODE_GO" != "--opencode-go=no" ] && echo -e "  ${WHITE}opencode auth login${NC}"
-[ "$CLAUDE" != "--claude=no" ] && echo -e "  ${WHITE}opencode auth login${NC}"
-[ "$OPENAI" != "--openai=no" ] && echo -e "  ${WHITE}opencode auth login${NC}"
+# Step 9: Optional extras
+step "Optional extras"
+yn "Install supermemory?" && run "Supermemory" bash -c "bunx opencode-supermemory@latest install --no-tui 2>&1"
+yn "Install firecrawl?" && run "Firecrawl" bash -c "npm install -g firecrawl-cli 2>/dev/null || npm install -g @firecrawl/firecrawl-cli 2>/dev/null"
+yn "Install wakatime?" && run "WakaTime" npm install -g opencode-wakatime 2>/dev/null
 
-echo -e "\n${CYAN}======================================"
-echo -e "  ${GREEN}Setup complete!${NC}"
-echo -e "${CYAN}======================================${NC}"
-echo -e "\n${CYAN}Quick start:${NC}"
-echo -e "  ${WHITE}1. opencode              # Launch${NC}"
-echo -e "  ${WHITE}2. ulw your task         # Ultrawork mode${NC}"
-echo -e "  ${WHITE}3. Tab to cycle agents${NC}"
-echo -e "  ${WHITE}4. @security-auditor     # Security audit${NC}"
-echo -e "  ${WHITE}5. @refactor <files>     # Refactor${NC}"
-echo -e "  ${WHITE}6. @docs-writer          # Docs${NC}"
-echo -e "  ${YELLOW}Star if helpful!${NC}"
+# Step 10: Verify
+step "Verification"
+run "Doctor" bunx oh-my-openagent doctor 2>&1 || true
+
+# Step 11: Summary
+sec "Setup Complete!"
+echo -e "${C}"
+echo '  ╔══════════════════════════════════════════╗'
+echo '  ║  🚀  opencode          — launch          ║'
+echo '  ║  🔥  ulw <task>        — ultrawork       ║'
+echo '  ║  ↹  Tab                — cycle agents    ║'
+echo '  ║  🛡  @security-auditor — security        ║'
+echo '  ║  🔧  @refactor <files> — refactor        ║'
+echo '  ║  📝  @docs-writer      — docs            ║'
+echo '  ║  🎯  51 skills         — auto-triggered   ║'
+echo '  ║  📋  #snippet          — text expansion   ║'
+echo '  ║  🔔  Notifications     — task alerts      ║'
+echo '  ╚══════════════════════════════════════════╝'
+echo -e "${NC}"
+echo -e "  ${Y}Auth: opencode auth login${NC}"
+echo -e "  ${D}Star: https://github.com/skeletorflet/opencode-supreme-setup${NC}"
+echo

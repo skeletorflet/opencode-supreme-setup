@@ -20,6 +20,7 @@ env
 error
 find
 git
+git-master
 graphql
 i18n
 json
@@ -32,6 +33,7 @@ naming
 node
 onboard
 perf
+playwright
 pr-review
 python
 react
