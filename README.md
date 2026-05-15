@@ -1,6 +1,6 @@
 # OpenCode Supreme Setup
 
-![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.jpg?raw=true)
+![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.webp?raw=true)
 
 > **The ULTIMATE one-command OpenCode setup** — 135+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman.
 
