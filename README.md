@@ -2,7 +2,7 @@
 
 ![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.jpg?raw=true)
 
-> **The ULTIMATE one-command OpenCode setup** — 150+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman v4.
+> **The ULTIMATE one-command OpenCode setup** — 135+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman v4.
 
 [![OpenCode](https://img.shields.io/badge/OpenCode-powered-6366f1?style=flat-square)](https://opencode.ai)
 [![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-57.8k⭐-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)
@@ -19,7 +19,7 @@
 | **Agent Orchestration** | oh-my-openagent (Sisyphus, Team Mode, 8 parallel agents) |
 | **Caveman v4** | Ultra-efficient AGENTS.md — surgical edits (AST/LSP), zero-fluff, English-only output |
 | **Custom Agents** | `caveman`, `spec-architect`, `self-healer`, `security-auditor`, `docs-writer`, `refactor` |
-| **Skills** | 53 built-in (including `openspec`, `self-healing`) + 100+ marketplace skills |
+| **Skills** | 135 built-in (including `openspec`, `self-healing`) + 100+ marketplace skills |
 | **Plugins** | snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch |
 | **Memory** | Persistent vector-DB memory (`opencode-mem`) — cross-session context |
 | **Token Savings** | `snip` CLI — filters shell output, 60-90% fewer tokens |
@@ -63,7 +63,7 @@ The installer runs 13 automated steps:
 | 2 | OpenCode + Bun |
 | 3 | Provider subscription configuration |
 | 4 | oh-my-openagent (agent orchestration) |
-| 5 | Config files + 53 built-in skills (SDD & Self-Healing) |
+| 5 | Config files + 135 built-in skills (SDD & Self-Healing) |
 | 6 | Platform optimizations (tmux on/off, model overrides) |
 | 7 | Developer tools (comment-checker, ast-grep, GitHub CLI) |
 | 8 | **10 essential plugins** (snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch) |
@@ -91,8 +91,22 @@ The installer runs 13 automated steps:
 
 ## Skills
 
-### 53 Built-in Skills
-a11y, api, arch, async, auth, benchmark, caching, ci, cleanup, cli, config, css, data, db, debug, deploy, docker, docs, env, error, find, git, git-master, graphql, i18n, json, logging, markdown, mcp, migration, monitoring, naming, node, onboard, openspec, perf, playwright, pr-review, python, react, refactor, regex, rest, scaffold, security, self-healing, serialize, shell, state, test, typescript, ui, webhook
+### 135 Built-in Skills
+
+**Core** (53): a11y, api, arch, async, auth, benchmark, caching, ci, cleanup, cli, config, css, data, db, debug, deploy, docker, docs, env, error, find, git, git-master, graphql, i18n, json, logging, markdown, mcp, migration, monitoring, naming, node, onboard, openspec, perf, playwright, pr-review, python, react, refactor, regex, rest, scaffold, security, self-healing, serialize, shell, state, test, typescript, ui, webhook
+
+| Category | Skills |
+|----------|--------|
+| **Frontend** (12) | angular, astro, gatsby, gsap, htmx, motion-framer, nextjs, nuxt, svelte, tailwind, threejs, vue |
+| **Backend** (16) | actix-web, aspnet-core, bun, django, elysia, express, fastapi, fastify, fiber, flask, gin, hono, koa, laravel, nestjs, rails |
+| **Languages** (9) | dart, deno, elixir, go-lang, kotlin, rust, solidjs, swift, zig |
+| **Mobile/Desktop** (4) | electron, flutter, react-native, tauri |
+| **Databases** (7) | drizzle, mongodb, postgresql, prisma, redis, sqlite, supabase |
+| **AI/ML** (6) | crewai, huggingface, langchain, ollama, pytorch, tensorflow |
+| **DevOps** (6) | ansible, github-actions, helm, kubernetes, pulumi, terraform |
+| **Testing** (3) | cypress, sentry, vitest |
+| **Design** (7) | d3js, material-ui, shadcn, react-hook-form, tanstack-query, trpc, zustand |
+| **Tools** (12) | clerk, esbuild, nx, pnpm, qwik, remix, spring-boot, stripe, sveltekit, turborepo, vite, zod |
 
 ### 100+ Marketplace Skills (via OpenSkills)
 PDF manipulation, image analysis, data visualization, git workflows, code review, documentation, deployment, security auditing, and more from [anthropics/skills](https://github.com/anthropics/skills).
@@ -122,7 +136,7 @@ npx openskills read <name>  # Load marketplace skill
 | `config/opencode.json` | Main OpenCode config — plugins, agents, skills path |
 | `config/oh-my-openagent.json` | oh-my-openagent plugin config — models, team mode |
 | `config/AGENTS.md` | Global caveman instructions + skill references |
-| `config/skills/*/SKILL.md` | 51 built-in skills |
+| `config/skills/*/SKILL.md` | 135 built-in skills |
 | `config/skills.txt` | Inventory of all built-in skills |
 | `install.ps1` | Windows installer (works piped from irm) |
 | `install.sh` | Linux/macOS installer |
