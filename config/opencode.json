@@ -56,6 +56,8 @@
     }
   },
   "skills": {
-    "paths": ["~/.config/opencode/skills"]
+    "paths": ["~/.config/opencode/skills"],
+    "badge": "https://img.shields.io/badge/skills-150%2B-6366f1?style=flat-square",
+    "minimum_count": 50
   }
 }

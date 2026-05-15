@@ -134,8 +134,8 @@ task "install orchestrator" \
 task_s "install (fallback)" \
   bash -c "bunx oh-my-openagent install --no-tui --claude=no --gemini=no --copilot=no --opencode-go=yes --skip-auth"
 
-# ─────────────────────────────────────────────────── [5] Config & skills ────
-section "Config + 53 Skills"
+# ─────────────────────────────────────────────────── [5] Config & 135 skills ──
+section "Config + 135 Skills"
 task "cleanup legacy jsonc" \
   bash -c "rm -f \"$CONF/opencode.jsonc\" \"$CONF/opencode.jsonc.backup-\"* && mkdir -p \"$CONF\""
 
@@ -145,12 +145,11 @@ else
   task "opencode.json"        bash -c "curl -fsSL \"$CONF_URL/opencode.json\" -o \"$CONF/opencode.json\""
   task "oh-my-openagent.json" bash -c "curl -fsSL \"$CONF_URL/oh-my-openagent.json\" -o \"$CONF/oh-my-openagent.json\""
   task "AGENTS.md"            bash -c "curl -fsSL \"$CONF_URL/AGENTS.md\" -o \"$CONF/AGENTS.md\""
-  task "53 built-in skills"   bash -c "
+  task "135 skills (bundle)" bash -c "
     mkdir -p \"$CONF/skills\"
-    for s in \$(curl -fsSL \"$CONF_URL/skills.txt\"); do
-      mkdir -p \"$CONF/skills/\$s\"
-      curl -fsSL \"$CONF_URL/skills/\$s/SKILL.md\" -o \"$CONF/skills/\$s/SKILL.md\" 2>/dev/null || true
-    done
+    curl -fsSL \"$CONF_URL/skills.tar.gz\" -o /tmp/skills.tar.gz
+    tar -xzf /tmp/skills.tar.gz -C \"$CONF/skills\"
+    rm -f /tmp/skills.tar.gz
   "
 fi
 
@@ -255,6 +254,11 @@ except: pass
 # ──────────────────────────────────────── [9] OpenSkills  (100+ skills) ─────
 section "OpenSkills  (100+)"
 task_s "anthropics/skills"  npx openskills install anthropics/skills -y
+task_s "mattpocock/skills"           npx openskills install mattpocock/skills -y
+task_s "JuliusBrussee/caveman"       npx openskills install JuliusBrussee/caveman -y
+task_s "safishamsi/graphify"         npx openskills install safishamsi/graphify -y
+task_s "nexu-io/open-design"         npx openskills install nexu-io/open-design -y
+task_s "nextlevelbuilder/ui-ux-pro-max-skill" npx openskills install nextlevelbuilder/ui-ux-pro-max-skill -y
 task_s "openskills CLI"     npm install -g openskills
 task_s "sync to AGENTS.md"  bash -c "npx openskills sync -y -o \"$CONF/AGENTS.md\""
 

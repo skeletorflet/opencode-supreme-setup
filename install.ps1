@@ -161,8 +161,8 @@ Invoke-Task "install orchestrator" -Soft -Body {
   bunx oh-my-openagent install --no-tui @args2 --skip-auth 2>&1 | Out-Null; $true
 }
 
-# ─────────────────────────────────────────── [5] Config + 53 skills ─────────
-Section "Config + 53 Skills"
+# ─────────────────────────────────────────── [5] Config + 135 skills ────────
+Section "Config + 135 Skills"
 if (-not (Test-Path $ConfDir)) { New-Item -ItemType Directory -Path $ConfDir -Force | Out-Null }
 $d  = $ConfDir
 $u  = $ConfUrl
@@ -188,15 +188,15 @@ if ($RepoDir -and (Test-Path "$RepoDir\config")) {
   Invoke-Task "AGENTS.md" -Soft -Body {
     Invoke-RestMethod "$($using:u)/AGENTS.md" -OutFile "$($using:d)\AGENTS.md"; $true
   }
-  Invoke-Task "53 built-in skills" -Soft -Body {
+  Invoke-Task "135 skills (bundle)" -Soft -Body {
     $sd = Join-Path $using:d "skills"
-    $list = (Invoke-RestMethod "$($using:u)/skills.txt") -split "`n" |
-              ForEach-Object { $_.Trim() } | Where-Object { $_ }
-    foreach ($s in $list) {
-      $dir = Join-Path $sd $s; New-Item -ItemType Directory -Path $dir -Force | Out-Null
-      try { Invoke-RestMethod "$($using:u)/skills/$s/SKILL.md" -OutFile (Join-Path $dir "SKILL.md") } catch {}
-    }; $true
-  }
+    New-Item -ItemType Directory -Path $sd -Force | Out-Null
+    $bundleUrl = "$($using:u)/skills.tar.gz"
+    $bundlePath = Join-Path $using:d "skills.tar.gz"
+    Invoke-RestMethod $bundleUrl -OutFile $bundlePath
+    tar -xzf $bundlePath -C $sd
+    Remove-Item $bundlePath -Force
+    $true
 }
 
 # register plugin in config
@@ -288,6 +288,11 @@ if (Test-Path $oc) {
 # ─────────────────────────────────────────── [9] OpenSkills (100+) ──────────
 Section "OpenSkills  (100+)"
 Invoke-Task "anthropics/skills"  -Soft -Body { npx openskills install anthropics/skills -y 2>&1 | Out-Null; $true }
+Invoke-Task "mattpocock/skills"           -Soft -Body { npx openskills install mattpocock/skills -y 2>&1 | Out-Null; $true }
+Invoke-Task "JuliusBrussee/caveman"       -Soft -Body { npx openskills install JuliusBrussee/caveman -y 2>&1 | Out-Null; $true }
+Invoke-Task "safishamsi/graphify"         -Soft -Body { npx openskills install safishamsi/graphify -y 2>&1 | Out-Null; $true }
+Invoke-Task "nexu-io/open-design"         -Soft -Body { npx openskills install nexu-io/open-design -y 2>&1 | Out-Null; $true }
+Invoke-Task "nextlevelbuilder/ui-ux-pro-max-skill" -Soft -Body { npx openskills install nextlevelbuilder/ui-ux-pro-max-skill -y 2>&1 | Out-Null; $true }
 Invoke-Task "openskills CLI"     -Soft -Body { npm install -g openskills 2>&1 | Out-Null; $true }
 $amd = "$ConfDir\AGENTS.md"
 Invoke-Task "sync to AGENTS.md"  -Soft -Body { npx openskills sync -y -o $using:amd 2>&1 | Out-Null; $true }
