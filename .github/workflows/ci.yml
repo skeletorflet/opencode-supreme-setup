@@ -30,10 +30,10 @@ jobs:
       - name: Validate skills ecosystem
         run: pwsh ./scripts/validate-skills.ps1 -Strict
       - name: Audit skills
-        run: ./scripts/skill-audit.sh --check
+        run: bash scripts/skill-audit.sh --check
       - name: Verify skill count via audit
         run: |
-          output=$(./scripts/skill-audit.sh --format json)
+          output=$(bash scripts/skill-audit.sh --format json)
           count=$(echo "$output" | python3 -c "import sys,json; print(json.load(sys.stdin)['count'])")
           echo "Audited skills count: $count"
           [ "$count" -ge 50 ] || (echo "Need 50+ skills"; exit 1)
