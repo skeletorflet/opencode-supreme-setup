@@ -98,6 +98,7 @@ function Invoke-Task {
   if ($ok) { Write-Host "`r    ${GREEN}✓${R}  ${WHITE}$pad${R}" }
   else     { Write-Host "`r    ${RED}✗${R}  ${RED}$pad${R}  ${GRAY}↳ $LogFile${R}" }
   if (-not $ok -and -not $Soft) { exit 1 }
+}
 
 # ── Prompt  [Y/n]  Enter = Y ───────────────────────────────────────────────
 function Ask-YN([string]$Q, [string]$Def = "y") {
