@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OpenCode Supreme Setup v4.0
+# OpenCode Supreme Setup
 # shellcheck disable=SC2034,SC2059,SC2016
 
 # ── Monokai Pastel Dark Palette (256-color ANSI) ───────────────────────────
@@ -32,8 +32,9 @@ _header(){
   clear
   printf "${PURPLE}${B}"
   printf "  ╭──────────────────────────────────────────────────────╮\n"
-  printf "  │  ✦  OpenCode Supreme Setup                   v4.0  │\n"
   printf "  │     150+ skills · 13 plugins · SDD · caveman-v4     │\n"
+  printf "  │  ✦  OpenCode Supreme Setup                           │\n"
+  printf "  │     150+ skills · 13 plugins · SDD · caveman           │\n"
   printf "  ╰──────────────────────────────────────────────────────╯${R}\n"
 }
 

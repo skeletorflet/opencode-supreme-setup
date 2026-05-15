@@ -1,8 +1,8 @@
-# OpenCode Supreme Setup v4.0
+# OpenCode Supreme Setup
 
 ![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.jpg?raw=true)
 
-> **The ULTIMATE one-command OpenCode setup** — 135+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman v4.
+> **The ULTIMATE one-command OpenCode setup** — 135+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman.
 
 [![OpenCode](https://img.shields.io/badge/OpenCode-powered-6366f1?style=flat-square)](https://opencode.ai)
 [![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-57.8k⭐-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)

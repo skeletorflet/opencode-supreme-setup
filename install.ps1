@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# OpenCode Supreme Setup v4.0
+# OpenCode Supreme Setup
 param(
   [switch]$NonInteractive,
   [string]$Claude     = "",
@@ -55,8 +55,9 @@ $script:Phase = 0; $TotalPhases = 10
 function Show-Header {
   Clear-Host
   Write-Host "${PURPLE}${B}  ╭──────────────────────────────────────────────────────╮"
-  Write-Host "  │  ✦  OpenCode Supreme Setup                   v4.0  │"
   Write-Host "  │     150+ skills · 13 plugins · SDD · caveman-v4     │"
+  Write-Host "  │  ✦  OpenCode Supreme Setup                           │"
+  Write-Host "  │     150+ skills · 13 plugins · SDD · caveman           │"
   Write-Host "  ╰──────────────────────────────────────────────────────╯${R}"
 }
 
