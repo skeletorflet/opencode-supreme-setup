@@ -21,3 +21,4 @@ credentials.json
 
 # Self
 .sisyphus/
+.claude/
