@@ -199,7 +199,7 @@ if ($RepoDir -and (Test-Path "$RepoDir\config")) {
     Remove-Item $bundlePath -Force
     $true
 }
-
+}
 # register plugin in config
 if (Test-Path $oc) {
   try {

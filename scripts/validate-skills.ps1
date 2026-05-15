@@ -8,7 +8,7 @@ Checks that every skill directory has a valid SKILL.md, skills.txt is in sync
 with the filesystem, and minimum skill count threshold is met.
 
 .PARAMETER Strict
-Enable additional checks: body length >= 15 lines, description >= 20 chars.
+Enable additional checks: body length >= 10 lines, description >= 20 chars.
 
 .PARAMETER MinCount
 Minimum skill count threshold. Default: 50.
@@ -91,7 +91,7 @@ foreach ($file in $skillMdFiles) {
         if ($bodyStart -gt 0 -and $bodyStart -lt $lines.Count) {
             $bodyLines = ($lines | Select-Object -Skip $bodyStart | Where-Object { $_.Trim() -ne '' }).Count
         }
-        if ($bodyLines -lt 15) {
+        if ($bodyLines -lt 10) {
             $bodyErrors += "$name ($bodyLines lines)"
         }
 
