@@ -97,9 +97,7 @@ function Invoke-Task {
   $ok = ($job.ChildJobs.Count -eq 0) -or ($job.ChildJobs[0].State -eq 'Completed')
   if ($ok) { Write-Host "`r    ${GREEN}✓${R}  ${WHITE}$pad${R}" }
   else     { Write-Host "`r    ${RED}✗${R}  ${RED}$pad${R}  ${GRAY}↳ $LogFile${R}" }
-  if (-not $ok -and -not $Soft) { return $false }
-  return $true
-}
+  if (-not $ok -and -not $Soft) { exit 1 }
 
 # ── Prompt  [Y/n]  Enter = Y ───────────────────────────────────────────────
 function Ask-YN([string]$Q, [string]$Def = "y") {

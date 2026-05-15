@@ -31,8 +31,11 @@ for dir in "$SKILLS_DIR"/*/; do
   [ "$first_line" = "---" ] && has_frontmatter=true
   grep -Eq '^description:\s*.+' "$md" 2>/dev/null && has_description=true
 
-  valid=false
-  $has_frontmatter && $has_description && valid=true
+  if $has_frontmatter && $has_description; then
+    valid=true
+  else
+    valid=false
+  fi
   $valid || ALL_VALID=false
 
   RESULTS+=("$name|$total_lines|$has_frontmatter|$has_description|$valid")
@@ -48,9 +51,9 @@ case "$FORMAT" in
     IFS=$'\n' sorted=($(sort <<< "${RESULTS[*]}")); unset IFS
     for row in "${sorted[@]}"; do
       IFS='|' read -r name lines fm desc valid <<< "$row"
-      fm_char='✅'; $fm && fm_char='✅' || fm_char='❌'
-      desc_char='✅'; $desc && desc_char='✅' || desc_char='❌'
-      status_char='✅'; $valid && status_char='✅' || status_char='❌'
+      if $fm; then fm_char='✅'; else fm_char='❌'; fi
+      if $desc; then desc_char='✅'; else desc_char='❌'; fi
+      if $valid; then status_char='✅'; else status_char='❌'; fi
       printf "| %s | %s | %s | %s | %s |\n" "$name" "$lines" "$fm_char" "$desc_char" "$status_char"
     done
     echo ""

@@ -62,7 +62,7 @@
   "team_mode": {
     "enabled": true,
     "max_parallel_members": 8,
-    "tmux_visualization": true
+    "tmux_visualization": false
   },
   "agent_order": ["sisyphus", "hephaestus", "prometheus", "atlas"],
   "tmux": {
@@ -133,7 +133,7 @@
       "notification": "minimal",
       "turn_protection": {
         "enabled": true,
-        "turns": 3
+        "turns": 10
       },
       "strategies": {
         "deduplication": {
