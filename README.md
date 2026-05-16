@@ -2,7 +2,7 @@
 
 ![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.webp?raw=true)
 
-> **The ULTIMATE one-command OpenCode setup** — 135+ skills, 13 plugins, SDD (Spec-Driven Development), Self-Healing automation, Visual Dashboard, and Caveman.
+> **The ULTIMATE one-command OpenCode setup** — 480+ skills, 15 plugins, SDD (Spec-Driven Development), Self-Healing automation, Superpowers workflow engine, and Caveman.
 
 [![OpenCode](https://img.shields.io/badge/OpenCode-powered-6366f1?style=flat-square)](https://opencode.ai)
 [![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-57.8k⭐-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)
@@ -19,8 +19,8 @@
 | **Agent Orchestration** | oh-my-openagent (Sisyphus, Team Mode, 8 parallel agents) |
 | **Caveman v4** | Ultra-efficient AGENTS.md — surgical edits (AST/LSP), zero-fluff, English-only output |
 | **Custom Agents** | `caveman`, `spec-architect`, `self-healer`, `security-auditor`, `docs-writer`, `refactor` |
-| **Skills** | 135 built-in (including `openspec`, `self-healing`) + 100+ marketplace skills |
-| **Plugins** | snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch |
+| **Skills** | 465+ (135 built-in + 330 marketplace + 13 Superpowers workflow) |
+| **Plugins** | snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch, superpowers, supermemory |
 | **Memory** | Persistent vector-DB memory (`opencode-mem`) — cross-session context |
 | **Token Savings** | `snip` CLI — filters shell output, 60-90% fewer tokens |
 | **Model** | 100% `opencode-go/deepseek-v4-flash` across all agents |
@@ -66,12 +66,14 @@ The installer runs 13 automated steps:
 | 5 | Config files + 135 built-in skills (SDD & Self-Healing) |
 | 6 | Platform optimizations (tmux on/off, model overrides) |
 | 7 | Developer tools (comment-checker, ast-grep, GitHub CLI) |
-| 8 | **10 essential plugins** (snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch) |
-| 9 | **OpenSkills — 100+ marketplace skills** |
-| 10 | Optional: agentsys (20 plugins, 49 agents, 41 skills) |
-| 11 | Optional: supermemory, firecrawl, WakaTime, themes |
-| 12 | Verification (oh-my-openagent doctor) |
-| 13 | Summary |
+| 8 | **12 essential plugins** (snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch, superpowers, supermemory) |
+| 9 | **OpenSkills — 100+ marketplace skills** (from anthropics/skills) |
+| 10 | **Superpowers — 13 workflow skills** (from obra/superpowers) — TDD, debugging, planning, code review, subagent-driven dev, worktree isolation |
+| 11 | Optional: agentsys (20 plugins, 49 agents, 41 skills) |
+| 12 | Optional: supermemory, firecrawl, WakaTime, themes |
+| 13 | Verification (oh-my-openagent doctor) |
+| 14 | Summary |
+| 15 | Done! |
 
 ## Plugins
 
@@ -88,6 +90,8 @@ The installer runs 13 automated steps:
 | **opencode-dynamic-context-pruning** | Auto-prune obsolete tool outputs from context |
 | **opencode-smart-title** | Auto-generates meaningful session titles |
 | **ocwatch** | Real-time visual dashboard for agent activity monitoring |
+| **superpowers** | Full-stack engineering workflow — brainstorming, TDD, subagent-driven development, systematic debugging, code review, worktrees, verification |
+| **supermemory** | Persistent cross-session knowledge with web UI |
 
 ## Skills
 
@@ -109,9 +113,12 @@ The installer runs 13 automated steps:
 | **Tools** (12) | clerk, esbuild, nx, pnpm, qwik, remix, spring-boot, stripe, sveltekit, turborepo, vite, zod |
 
 ### 100+ Marketplace Skills (via OpenSkills)
-PDF manipulation, image analysis, data visualization, git workflows, code review, documentation, deployment, security auditing, and more from [anthropics/skills](https://github.com/anthropics/skills).
+PDF manipulation, image analysis, data visualization, git workflows, code review, documentation, deployment, security auditing, and more.
 
 Use: `npx openskills read <skill-name>`
+
+### 13 Superpowers Workflow Skills (from obra/superpowers)
+Engineering methodology pipeline: brainstorming → writing-plans → subagent-driven-development (with spec + quality review) → requesting-code-review → finishing-a-development-branch. Plus: systematic-debugging, verification-before-completion, test-driven-development, using-git-worktrees.
 
 ## Usage
 

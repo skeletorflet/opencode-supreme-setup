@@ -15,7 +15,9 @@
     "opencode-worktree",
     "opencode-dynamic-context-pruning",
     "opencode-smart-title",
-    "ocwatch"
+    "ocwatch",
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "supermemory"
   ],
   "agent": {
     "caveman": {
@@ -57,7 +59,7 @@
   },
   "skills": {
     "paths": ["~/.config/opencode/skills"],
-    "badge": "https://img.shields.io/badge/skills-150%2B-6366f1?style=flat-square",
+    "badge": "https://img.shields.io/badge/skills-480%2B-6366f1?style=flat-square",
     "minimum_count": 50
   }
 }
