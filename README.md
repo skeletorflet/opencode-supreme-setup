@@ -2,7 +2,7 @@
 
 ![OpenCode Supreme Setup Banner](https://github.com/skeletorflet/opencode-supreme-setup/blob/master/banner.webp?raw=true)
 
-> **The ULTIMATE one-command OpenCode setup** — 480+ skills, 15 plugins, SDD (Spec-Driven Development), Self-Healing automation, Superpowers workflow engine, and Caveman.
+> **The ULTIMATE one-command OpenCode setup** — 343+ skills, 13 plugins, Caveman mode, Team Mode (8 parallel agents), Self-Healing, Superpowers workflow engine, and SDD.
 
 [![OpenCode](https://img.shields.io/badge/OpenCode-powered-6366f1?style=flat-square)](https://opencode.ai)
 [![oh-my-openagent](https://img.shields.io/badge/oh--my--openagent-57.8k⭐-22c55e?style=flat-square)](https://github.com/code-yeongyu/oh-my-openagent)
@@ -16,15 +16,19 @@
 
 | Category | Included |
 |----------|----------|
-| **Agent Orchestration** | oh-my-openagent (Sisyphus, Team Mode, 8 parallel agents) |
-| **Caveman v4** | Ultra-efficient AGENTS.md — surgical edits (AST/LSP), zero-fluff, English-only output |
+| **Agent Orchestration** | oh-my-openagent — Sisyphus loops, Team Mode (8 parallel), 10 sub-agents |
+| **Team Mode** | 8 max parallel members, team task system, team messaging |
+| **Caveman Mode** | Ultra-efficient AGENTS.md — zero fluff, surgical AST/LSP edits, English-only output |
 | **Custom Agents** | `caveman`, `spec-architect`, `self-healer`, `security-auditor`, `docs-writer`, `refactor` |
-| **Skills** | 465+ (135 built-in + 330 marketplace + 13 Superpowers workflow) |
-| **Plugins** | snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch, superpowers, supermemory |
-| **Memory** | Persistent vector-DB memory (`opencode-mem`) — cross-session context |
+| **Sub-Agents** | `sisyphus`, `oracle`, `librarian`, `explore`, `multimodal-looker`, `prometheus`, `metis`, `momus`, `atlas`, `sisyphus-junior` |
+| **Agent Categories** | visual-engineering, ultrabrain, deep, artistry, quick, unspecified-low, unspecified-high, writing |
+| **Skills** | 343+ unique (326 `~/.claude/skills` + 9 `~/.agents/skills` + 8 unique project) |
+| **Plugins** | 13 plugins — snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch, superpowers, supermemory, oh-my-openagent |
+| **MCP Servers** | web-search (Tavily), pdf-reader, google-drive, memory-plus |
+| **Memory** | opencode-mem (vector-DB, web UI localhost:4747) + supermemory (cross-session knowledge) |
 | **Token Savings** | `snip` CLI — filters shell output, 60-90% fewer tokens |
-| **Model** | 100% `opencode-go/deepseek-v4-flash` across all agents |
-| **Optimizations** | Hashline edits, runtime fallback, dynamic context pruning, auto-resume, cross-platform |
+| **Model** | 100% `opencode-go/deepseek-v4-flash` across all agents + fallbacks |
+| **Optimizations** | Hashline edits, runtime fallback (auto-retry 400/429/503/529), dynamic context pruning (dedup, supersede writes, purge errors), auto-resume, aggressive truncation, streaming tools |
 
 ## Prerequisites
 
@@ -55,7 +59,7 @@ git clone https://github.com/skeletorflet/opencode-supreme-setup.git && cd openc
 
 ## What Gets Installed
 
-The installer runs 13 automated steps:
+The installer runs 15 automated steps:
 
 | Step | What |
 |------|------|
@@ -63,31 +67,31 @@ The installer runs 13 automated steps:
 | 2 | OpenCode + Bun |
 | 3 | Provider subscription configuration |
 | 4 | oh-my-openagent (agent orchestration) |
-| 5 | Config files + 135 built-in skills (SDD & Self-Healing) |
+| 5 | Config files + built-in skills |
 | 6 | Platform optimizations (tmux on/off, model overrides) |
 | 7 | Developer tools (comment-checker, ast-grep, GitHub CLI) |
-| 8 | **12 essential plugins** (snippets, snip, notify, mem, quota, background-agents, worktree, context-pruning, smart-title, ocwatch, superpowers, supermemory) |
-| 9 | **OpenSkills — 100+ marketplace skills** (from anthropics/skills) |
-| 10 | **Superpowers — 13 workflow skills** (from obra/superpowers) — TDD, debugging, planning, code review, subagent-driven dev, worktree isolation |
-| 11 | Optional: agentsys (20 plugins, 49 agents, 41 skills) |
-| 12 | Optional: supermemory, firecrawl, WakaTime, themes |
-| 13 | Verification (oh-my-openagent doctor) |
-| 14 | Summary |
-| 15 | Done! |
+| 8 | **13 essential plugins** |
+| 9 | **OpenSkills — marketplace skills** (from anthropics/skills) |
+| 10 | **Superpowers — workflow skills** (from obra/superpowers) |
+| 11 | **Sub-agents** — sisyphus, oracle, librarian, explore, prometheus, metis, momus, atlas |
+| 12 | **Team Mode** — 8 parallel members, task system, messaging |
+| 13 | **MCP servers** — web-search (Tavily), pdf-reader, google-drive, memory-plus |
+| 14 | Optional: supermemory, themes |
+| 15 | Verification + Summary |
 
 ## Plugins
 
 | Plugin | What It Does |
 |--------|-------------|
-| **oh-my-openagent** | Sisyphus orchestrator, Team Mode, 8 parallel agents, Advanced MCPs |
+| **oh-my-openagent** | Sisyphus orchestrator, Team Mode (8 parallel), 10 sub-agents, Advanced MCPs, runtime fallback, category routing |
 | **opencode-snippets** | `#snippet` inline text expansion — DRY for prompts |
 | **opencode-snip** | Auto-prefixes shell commands with `snip` → 60-90% token reduction |
 | **opencode-notify** | Native OS notifications when tasks complete |
 | **opencode-mem** | Persistent vector-DB memory with web UI (localhost:4747) |
 | **opencode-quota** | Token usage and cost tracking with toasts |
-| **opencode-background-agents** | Claude Code-style background/async agent delegation |
+| **opencode-background-agents** | Async agent delegation (8 concurrent default, 5 model-specific) |
 | **opencode-worktree** | Zero-friction isolated git worktrees |
-| **opencode-dynamic-context-pruning** | Auto-prune obsolete tool outputs from context |
+| **opencode-dynamic-context-pruning** | Auto-prune obsolete tool outputs — dedup, supersede writes, purge errors after 5 turns |
 | **opencode-smart-title** | Auto-generates meaningful session titles |
 | **ocwatch** | Real-time visual dashboard for agent activity monitoring |
 | **superpowers** | Full-stack engineering workflow — brainstorming, TDD, subagent-driven development, systematic debugging, code review, worktrees, verification |
@@ -95,58 +99,112 @@ The installer runs 13 automated steps:
 
 ## Skills
 
-### 135 Built-in Skills
+### 343+ Unique Skills
 
-**Core** (53): a11y, api, arch, async, auth, benchmark, caching, ci, cleanup, cli, config, css, data, db, debug, deploy, docker, docs, env, error, find, git, git-master, graphql, i18n, json, logging, markdown, mcp, migration, monitoring, naming, node, onboard, openspec, perf, playwright, pr-review, python, react, refactor, regex, rest, scaffold, security, self-healing, serialize, shell, state, test, typescript, ui, webhook
+Skills are aggregated from 3 sources:
+
+| Source | Count |
+|--------|-------|
+| `~/.claude/skills/` | 326 — CKMs (brand, design, ui-styling), community plugins, HTML decks, creative tools |
+| `~/.agents/skills/` | 9 — build-your-own-x, compress, find-skills, skill-sync |
+| Project `.claude/skills/` | 334 — 8 additional unique project-specific skills |
+
+**Categories include:**
 
 | Category | Skills |
 |----------|--------|
-| **Frontend** (12) | angular, astro, gatsby, gsap, htmx, motion-framer, nextjs, nuxt, svelte, tailwind, threejs, vue |
-| **Backend** (16) | actix-web, aspnet-core, bun, django, elysia, express, fastapi, fastify, fiber, flask, gin, hono, koa, laravel, nestjs, rails |
-| **Languages** (9) | dart, deno, elixir, go-lang, kotlin, rust, solidjs, swift, zig |
-| **Mobile/Desktop** (4) | electron, flutter, react-native, tauri |
-| **Databases** (7) | drizzle, mongodb, postgresql, prisma, redis, sqlite, supabase |
-| **AI/ML** (6) | crewai, huggingface, langchain, ollama, pytorch, tensorflow |
-| **DevOps** (6) | ansible, github-actions, helm, kubernetes, pulumi, terraform |
-| **Testing** (3) | cypress, sentry, vitest |
-| **Design** (7) | d3js, material-ui, shadcn, react-hook-form, tanstack-query, trpc, zustand |
-| **Tools** (12) | clerk, esbuild, nx, pnpm, qwik, remix, spring-boot, stripe, sveltekit, turborepo, vite, zod |
+| **Frontend** | angular, astro, gatsby, gsap, htmx, motion-framer, nextjs, nuxt, svelte, tailwind, threejs, vue |
+| **Backend** | actix-web, aspnet-core, bun, django, elysia, express, fastapi, fastify, fiber, flask, gin, hono, koa, laravel, nestjs, rails |
+| **Languages** | dart, deno, elixir, go-lang, kotlin, rust, solidjs, swift, zig |
+| **Mobile/Desktop** | electron, flutter, react-native, tauri |
+| **Databases** | drizzle, mongodb, postgresql, prisma, redis, sqlite, supabase |
+| **AI/ML** | crewai, huggingface, langchain, ollama, pytorch, tensorflow |
+| **DevOps** | ansible, github-actions, helm, kubernetes, pulumi, terraform |
+| **Design** | d3js, material-ui, shadcn, ui-styling, ui-ux-pro-max, banner-design, brand, design |
+| **Creative** | hyperframes, algorithmic-art, canvas-design, sprite-animation, shader-dev, hand-drawn-diagrams |
+| **HTML Decks (50+)** | html-ppt, kami-deck, deck-swiss-international, guizang-ppt, 40+ Zhangzara templates |
+| **Media** | fal-generate, fal-3d, fal-video-edit, imagem, sora, replicate, venice-* |
+| **Methodology** | brainstorming, TDD, diagnose, systematic-debugging, review, verification-before-completion |
+| **Workflow** | superpowers (dispatching-parallel-agents, executing-plans, writing-plans, subagent-driven-development, finishing-a-development-branch) |
 
-### 100+ Marketplace Skills (via OpenSkills)
-PDF manipulation, image analysis, data visualization, git workflows, code review, documentation, deployment, security auditing, and more.
+Use: `skill(name="<skill-name>")` to load any skill.
 
-Use: `npx openskills read <skill-name>`
+### MCP Servers
 
-### 13 Superpowers Workflow Skills (from obra/superpowers)
-Engineering methodology pipeline: brainstorming → writing-plans → subagent-driven-development (with spec + quality review) → requesting-code-review → finishing-a-development-branch. Plus: systematic-debugging, verification-before-completion, test-driven-development, using-git-worktrees.
+| Server | Purpose |
+|--------|---------|
+| **web-search** (Tavily) | Real-time web search via MCP |
+| **pdf-reader** | Read and analyze PDF documents |
+| **google-drive** | Access files in Google Drive |
+| **memory-plus** | Advanced graph-based memory |
+
+## Agents
+
+### Primary Agents
+
+| Agent | Description |
+|-------|-------------|
+| `caveman` | **Default** — Ultra-efficient coder, zero fluff, max output |
+| `@spec-architect` | Spec-Driven Development — creates SPEC.md from requirements |
+| `@self-healer` | Autonomous debugging — fixes build/test failures silently |
+| `@security-auditor` | Security audit — finds vulns, secrets, injection risks |
+| `@refactor` | Code refactoring specialist — reduces duplication, modernizes |
+| `@docs-writer` | Documentation writer — clear, concise markdown docs |
+
+### Sub-Agents (oh-my-openagent)
+
+| Agent | Category | Purpose |
+|-------|----------|---------|
+| `sisyphus` | — | Main orchestrator, persistent loops |
+| `oracle` | ultrabrain | Deep analysis and research |
+| `librarian` | quick | Fast file search and code navigation |
+| `explore` | quick | Codebase exploration and discovery |
+| `multimodal-looker` | visual-engineering | Image/visual analysis |
+| `prometheus` | deep | Strategic planning and architecture |
+| `metis` | deep | Technical design and problem-solving |
+| `momus` | writing | Critique and review |
+| `atlas` | unspecified-high | Heavy implementation work |
+| `sisyphus-junior` | unspecified-low | Lightweight task execution |
+
+## Team Mode
+
+Team Mode is **enabled** with:
+- **8 max parallel members**
+- Task system with dependency tracking (`blockedBy`)
+- Team messaging and broadcasting
+- Shutdown approval workflow
+- Supports categories: deep, ultrabrain, quick, visual-engineering, artistry, writing, unspecified-low, unspecified-high
+
+Use `team_create`, `team_send_message`, `team_task_*` tools.
 
 ## Usage
 
 ```bash
-opencode                    # Launch
-ocwatch                     # Open visual dashboard (localhost:3000)
-ulw <task>                  # Ultrawork mode (parallel agents)
-Tab                         # Cycle: build → plan → caveman
-@spec-architect             # Spec-Driven Development (SDD)
-@self-healer                # Autonomous error correction
-@security-auditor           # Security audit
-@refactor <files>           # Refactor
-@docs-writer                # Write docs
-#snippet                    # Text expansion
-npx openskills read <name>  # Load marketplace skill
+opencode                          # Launch (caveman mode default)
+@spec-architect                   # Create SPEC.md (SDD)
+@self-healer                      # Auto-fix build/test failures
+@security-auditor                 # Security audit
+@refactor <files>                 # Refactor code
+@docs-writer                      # Generate documentation
+skill(name="<skill>")             # Load any skill
+ulw <task>                        # Ultrawork mode (parallel agents)
+#snippet                          # Text expansion
+npx openskills read <name>        # Load marketplace skill
 ```
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `config/opencode.json` | Main OpenCode config — plugins, agents, skills path |
-| `config/oh-my-openagent.json` | oh-my-openagent plugin config — models, team mode |
-| `config/AGENTS.md` | Global caveman instructions + skill references |
-| `config/skills/*/SKILL.md` | 135 built-in skills |
-| `config/skills.txt` | Inventory of all built-in skills |
-| `install.ps1` | Windows installer (works piped from irm) |
+| `~/.config/opencode/opencode.json` | Main config — plugins, agents, model, skills path |
+| `~/.config/opencode/oh-my-openagent.json` | Plugin config — sub-agents, team mode, MCP servers, fallback, pruning |
+| `~/.config/opencode/AGENTS.md` | Global caveman instructions + skill references |
+| `config/opencode.json` | Reference template (project copy) |
+| `config/oh-my-openagent.json` | Reference template (project copy) |
+| `config/AGENTS.md` | Reference template (project copy) |
+| `install.ps1` | Windows installer |
 | `install.sh` | Linux/macOS installer |
+| `.claude/skills/` | 334 project-level skills |
 | `CONTRIBUTING.md` | Guide for adding skills, plugins, themes |
 | `.github/workflows/ci.yml` | CI — validates config, skills, installers |
 
@@ -155,10 +213,11 @@ npx openskills read <name>  # Load marketplace skill
 | Problem | Solution |
 |---------|----------|
 | `ConfigInvalidError` | Delete `~/.config/opencode/opencode.jsonc` (old format) |
-| Plugin not loading | `opencode` → type `/plugin remove <name>` then `/plugin add <name>` |
+| Plugin not loading | `/plugin remove <name>` then `/plugin add <name>` |
 | Skills not triggering | Ensure `~/.config/opencode/skills/<name>/SKILL.md` exists |
-| snip not reducing tokens | Run `snip --version`, reinstall with `go install github.com/edouard-claude/snip/cmd/snip@latest` |
+| snip not reducing tokens | `snip --version`, reinstall with `go install github.com/edouard-claude/snip/cmd/snip@latest` |
 | opencode-mem not working | Check web UI at `http://localhost:4747` |
+| Team Mode not working | Verify `team_mode.enabled: true` in oh-my-openagent.json |
 
 ## Post-Install
 
