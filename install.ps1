@@ -751,6 +751,20 @@ function Main {
             }
         }
 
+        # Fix broken YAML in marketplace skill files
+        $skillFixPath = Join-Path $PWD ".claude\skills\open-design-landing\SKILL.md"
+        if (Test-Path $skillFixPath) {
+          $bt = [char]0x60
+          $old = "    description: Provider for $bt" + "image_strategy: generate$bt" + ". fal.ai is faster."
+          $new = "    description: 'Provider for $bt" + "image_strategy: generate$bt" + ". fal.ai is faster.'"
+          $content = [System.IO.File]::ReadAllText($skillFixPath)
+          if ($content.Contains($old)) {
+            $content = $content.Replace($old, $new)
+            [System.IO.File]::WriteAllText($skillFixPath, $content)
+            Write-NexusStatus "Patched YAML in open-design-landing SKILL.md" "SUCCESS"
+          }
+        }
+
         # Config sync
         Write-NexusHeader
         Write-Host ""
